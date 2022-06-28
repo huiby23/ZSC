@@ -53,34 +53,43 @@ def filter_exclude(entries, excludes):
 
 
 def cross_play(models, num_player, num_game, seed):
-    combs = list(itertools.combinations_with_replacement(models, num_player))
+    if args.root is not None:
+        combs = list(itertools.combinations_with_replacement(models, num_player))
+    else:
+        combs = list(itertools.combinations(models, num_player))
     perfs = defaultdict(list)
     for comb in combs:
         num_model = len(set(comb))
         score = evaluate_saved_model(comb, num_game, seed, 0)[0]
         perfs[num_model].append(score)
-
-    for num_model, scores in perfs.items():
-        print(
-            f"#model: {num_model}, #groups {len(scores)}, "
-            f"score: {np.mean(scores):.2f} "
-            f"+/- {np.std(scores) / np.sqrt(len(scores) - 1):.2f}"
-        )
+    if args.root is not None:
+        for num_model, scores in perfs.items():
+            print(
+                f"#model: {num_model}, #groups {len(scores)}, "
+                f"score: {np.mean(scores):.2f} "
+                f"+/- {np.std(scores) / np.sqrt(len(scores) - 1):.2f}"
+            )
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--root", default=None, type=str, required=True)
-parser.add_argument("--num_player", default=None, type=int, required=True)
+parser.add_argument("--root", default=None, type=str)
+parser.add_argument("--num_player", default=None, type=int, required=False)
 parser.add_argument("--include", default=None, type=str, nargs="+")
 parser.add_argument("--exclude", default=None, type=str, nargs="+")
+parser.add_argument("--model_a", default=None, type=str)
+parser.add_argument("--model_b", default=None, type=str)
 
 args = parser.parse_args()
 
-models = common_utils.get_all_files(args.root, "model0.pthw")
-if args.include is not None:
-    models = filter_include(models, args.include)
-if args.exclude is not None:
-    models = filter_exclude(models, args.exclude)
+if args.root is not None:
+    models = common_utils.get_all_files(args.root, "model0.pthw")
+    if args.include is not None:
+        models = filter_include(models, args.include)
+    if args.exclude is not None:
+        models = filter_exclude(models, args.exclude)
 
-pprint.pprint(models)
-cross_play(models, args.num_player, 1000, 1)
+    pprint.pprint(models)
+    cross_play(models, args.num_player, 1000, 1)
+else:
+    models = [args.model_a, args.model_b]
+    cross_play(models, args.num_player, 1000, 1)
