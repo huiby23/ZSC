@@ -100,6 +100,10 @@ def parse_args():
     parser.add_argument("--act_device", type=str, default="cuda:1")
     parser.add_argument("--actor_sync_freq", type=int, default=10)
 
+    # adversarial training setting
+    parser.add_argument('--adversarial_train', action='store_true', default=False,
+                    help='whether train agents in adversarial mode')
+
     args = parser.parse_args()
     if args.off_belief == 1:
         args.method = "iql"
@@ -108,6 +112,7 @@ def parse_args():
         assert not args.shuffle_color
     assert args.method in ["vdn", "iql"]
     return args
+
 
 
 if __name__ == "__main__":
@@ -124,6 +129,8 @@ if __name__ == "__main__":
     common_utils.set_all_seeds(args.seed)
     pprint.pprint(vars(args))
 
+    adv_agent = None
+    replay_buffer_adv = None 
     if args.method == "vdn":
         args.batchsize = int(np.round(args.batchsize / args.num_player))
         args.replay_buffer_size //= args.num_player
@@ -171,6 +178,24 @@ if __name__ == "__main__":
         args.off_belief,
     )
     agent.sync_target_with_online()
+    
+    if args.adversarial_train:
+        adv_agent = r2d2.R2D2AdvAgent(
+        False,
+        args.multi_step,
+        args.gamma,
+        args.eta,
+        args.train_device,
+        games[0].feature_size(args.sad),
+        args.rnn_hid_dim,
+        games[0].num_action(),
+        args.net,
+        args.num_lstm_layer,
+        args.boltzmann_act,
+        False,  # uniform priority
+        args.off_belief,
+        )
+
 
     if args.load_model and args.load_model != "None":
         if args.off_belief and args.belief_model != "None":
@@ -201,6 +226,21 @@ if __name__ == "__main__":
         args.prefetch,
     )
 
+    if args.adversarial_train:
+        assert args.method == "iql"
+        adv_agent = adv_agent.to(args.train_device)
+        optim = torch.optim.Adam(adv_agent.online_net.parameters(), lr=args.lr, eps=args.eps)
+        print(adv_agent)
+        eval_adv_agent = adv_agent.clone(args.train_device, {"vdn": False, "boltzmann_act": False})        
+
+        replay_buffer_adv = rela.RNNPrioritizedReplay(
+        args.replay_buffer_size,
+        args.seed,
+        args.priority_exponent,
+        args.priority_weight,
+        args.prefetch,
+        )
+
     belief_model = None
     if args.off_belief and args.belief_model != "None":
         print(f"load belief model from {args.belief_model}")
@@ -222,6 +262,8 @@ if __name__ == "__main__":
 
     act_group = ActGroup(
         args.act_device,
+        replay_buffer_adv,
+        adv_agent,
         agent,
         args.seed,
         args.num_thread,
