@@ -30,6 +30,47 @@ class R2D2Actor {
       // if replay buffer is None, then all params below are not used
       int multiStep,
       int seqLen,
+      float gamma,
+      bool adversary,
+      bool is_xp)
+      : runner_(std::move(runner))
+      , rng_(seed)
+      , numPlayer_(numPlayer)
+      , playerIdx_(playerIdx)
+      , epsList_(epsList)
+      , tempList_(tempList)
+      , vdn_(vdn)
+      , sad_(sad)
+      , shuffleColor_(shuffleColor)
+      , hideAction_(hideAction)
+      , trinary_(trinary)
+      , batchsize_(vdn_ ? numPlayer_ : 1)
+      , playerEps_(batchsize_)
+      , playerTemp_(batchsize_)
+      , colorPermutes_(batchsize_)
+      , invColorPermutes_(batchsize_)
+      , replayBuffer_(std::move(replayBuffer))
+      , r2d2Buffer_(std::make_unique<rela::R2D2Buffer>(multiStep, seqLen, gamma))
+      , is_xp_(is_xp)
+      , adversary_(adversary) {
+  }
+  
+  R2D2Actor(
+      std::shared_ptr<rela::BatchRunner> runner,
+      int seed,
+      int numPlayer,                       // total number os players
+      int playerIdx,                       // player idx for this player
+      const std::vector<float>& epsList,   // list of eps to sample from
+      const std::vector<float>& tempList,  // list of temp to sample from
+      bool vdn,
+      bool sad,
+      bool shuffleColor,
+      bool hideAction,
+      bool trinary,  // trinary aux task or full aux
+      std::shared_ptr<rela::RNNPrioritizedReplay> replayBuffer,
+      // if replay buffer is None, then all params below are not used
+      int multiStep,
+      int seqLen,
       float gamma)
       : runner_(std::move(runner))
       , rng_(seed)
@@ -48,7 +89,9 @@ class R2D2Actor {
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(std::move(replayBuffer))
-      , r2d2Buffer_(std::make_unique<rela::R2D2Buffer>(multiStep, seqLen, gamma)) {
+      , r2d2Buffer_(std::make_unique<rela::R2D2Buffer>(multiStep, seqLen, gamma))
+      , is_xp_(false)
+      , adversary_(false) {
   }
 
   // simpler constructor for eval mode
@@ -58,7 +101,9 @@ class R2D2Actor {
       int playerIdx,
       bool vdn,
       bool sad,
-      bool hideAction)
+      bool hideAction,
+      bool is_xp = false,
+      bool adversary = false)
       : runner_(std::move(runner))
       , rng_(1)  // not used in eval mode
       , numPlayer_(numPlayer)
@@ -74,7 +119,9 @@ class R2D2Actor {
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(nullptr)
-      , r2d2Buffer_(nullptr) {
+      , r2d2Buffer_(nullptr) 
+      , is_xp_(is_xp)
+      , adversary_(adversary){
   }
 
   void setPartners(std::vector<std::shared_ptr<R2D2Actor>> partners) {
@@ -142,6 +189,9 @@ class R2D2Actor {
 
   std::shared_ptr<rela::RNNPrioritizedReplay> replayBuffer_;
   std::unique_ptr<rela::R2D2Buffer> r2d2Buffer_;
+
+  const bool is_xp_;
+  const bool adversary_;
 
   rela::TensorDict prevHidden_;
   rela::TensorDict hidden_;

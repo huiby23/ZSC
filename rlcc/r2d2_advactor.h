@@ -16,6 +16,7 @@ class R2D2AdvActor {
  public:
   R2D2AdvActor(
       std::shared_ptr<rela::BatchRunner> runner,
+      bool is_xp, 
       int seed,
       int numPlayer,                       // total number os players
       int playerIdx,                       // player idx for this player
@@ -32,6 +33,7 @@ class R2D2AdvActor {
       int seqLen,
       float gamma)
       : runner_(std::move(runner))
+      , is_xp_(is_xp)
       , rng_(seed)
       , numPlayer_(numPlayer)
       , playerIdx_(playerIdx)
@@ -128,6 +130,7 @@ class R2D2AdvActor {
   const int playerIdx_;
   const std::vector<float> epsList_;
   const std::vector<float> tempList_;
+  const bool is_xp_;
   const bool vdn_;
   const bool sad_;
   const bool shuffleColor_;
