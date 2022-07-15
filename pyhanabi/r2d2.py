@@ -505,6 +505,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
             self.target_net_xp = FFWDNet(in_dim, hid_dim, out_dim).to(device)
             self.online_net_sp = FFWDNet(in_dim, hid_dim, out_dim).to(device)
             self.target_net_sp = FFWDNet(in_dim, hid_dim, out_dim).to(device)
+            self.policy_net = FFWDNet(in_dim, hid_dim, out_dim).to(device)
         elif net == "publ-lstm":
             self.online_net_xp = PublicLSTMNet(
                 device, in_dim, hid_dim, out_dim, num_lstm_layer
@@ -516,6 +517,9 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
                 device, in_dim, hid_dim, out_dim, num_lstm_layer
             ).to(device)
             self.target_net_sp = PublicLSTMNet(
+                device, in_dim, hid_dim, out_dim, num_lstm_layer
+            ).to(device)
+            self.policy_net = PublicLSTMNet(
                 device, in_dim, hid_dim, out_dim, num_lstm_layer
             ).to(device)
         elif net == "lstm":
@@ -531,6 +535,9 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
             self.target_net_sp = LSTMNet(
                 device, in_dim, hid_dim, out_dim, num_lstm_layer
             ).to(device)
+            self.policy_net = LSTMNet(
+                device, in_dim, hid_dim, out_dim, num_lstm_layer
+            ).to(device)
         elif net == "transformer":
             self.online_net_xp = TransformerNet(
                 device, in_dim, hid_dim, out_dim, nhead, nlayer, max_len
@@ -542,6 +549,9 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
                 device, in_dim, hid_dim, out_dim, nhead, nlayer, max_len
             )
             self.target_net_sp = TransformerNet(
+                device, in_dim, hid_dim, out_dim, nhead, nlayer, max_len
+            )
+            self.policy_net = TransformerNet(
                 device, in_dim, hid_dim, out_dim, nhead, nlayer, max_len
             )
         else:
