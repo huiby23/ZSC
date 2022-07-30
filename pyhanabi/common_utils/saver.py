@@ -71,7 +71,7 @@ class TopkSaver:
         self.worse_perf_idx = worse_perf_idx
         return True
 
-    def save_adv(self, model, state_dict_1, state_dict_2, perf, save_latest=False, force_save_name=None):
+    def save_adv(self, model, state_dict_1, state_dict_2, state_dict_3, perf, save_latest=False, force_save_name=None):
         if force_save_name is not None:
             model_name = "%s.pthm" % force_save_name
             weight_name = "%s.pthw" % force_save_name
@@ -80,6 +80,7 @@ class TopkSaver:
             if state_dict_1 is not None:
                 torch.save(state_dict_1, os.path.join(self.save_dir, "_1_"+weight_name))
                 torch.save(state_dict_2, os.path.join(self.save_dir, "_2_"+weight_name))
+                torch.save(state_dict_3, os.path.join(self.save_dir, "_3_"+weight_name))
 
         if save_latest:
             model_name = "latest.pthm"
@@ -89,6 +90,7 @@ class TopkSaver:
             if state_dict_1 is not None:
                 torch.save(state_dict_1, os.path.join(self.save_dir, "_1_"+weight_name))
                 torch.save(state_dict_2, os.path.join(self.save_dir, "_2_"+weight_name))
+                torch.save(state_dict_3, os.path.join(self.save_dir, "_3_"+weight_name))
 
         if perf <= self.worse_perf:
             # print('i am sorry')
@@ -102,6 +104,7 @@ class TopkSaver:
         if state_dict_1 is not None:
             torch.save(state_dict_1, os.path.join(self.save_dir, "_1_"+weight_name))
             torch.save(state_dict_2, os.path.join(self.save_dir, "_2_"+weight_name))
+            torch.save(state_dict_3, os.path.join(self.save_dir, "_3_"+weight_name))
 
         if len(self.perfs) < self.topk:
             self.perfs.append(perf)
