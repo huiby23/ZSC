@@ -70,5 +70,6 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp"
-    }
+    },
+    "python.pythonPath": "C:\\Users\\isaac\\anaconda3\\python.exe"
 }

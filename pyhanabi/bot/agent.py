@@ -99,7 +99,7 @@ class QreSpartaAgent(Agent):
         self.qre_lambda = qre_lambda
         self.seed = seed
 
-        device = "cuda:0"
+        device = "cuda:7"
         self.bp_model = load_supervised_agent(bp_path, device)
         self.belief_model = ARBeliefModel.load(
             belief_path,

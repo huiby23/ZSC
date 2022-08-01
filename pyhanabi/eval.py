@@ -32,7 +32,7 @@ def evaluate(
     *,
     num_thread=10,
     max_len=80,
-    device="cuda:0",
+    device="cuda:7",
 ):
     """
     evaluate agents as long as they have a "act" function
@@ -101,18 +101,18 @@ def evaluate_saved_model(
     if overwrite is None:
         overwrite = {}
     overwrite["vdn"] = False
-    overwrite["device"] = "cuda:0"
+    overwrite["device"] = "cuda:1"
     overwrite["boltzmann_act"] = False
 
     for weight_file in weight_files:
-        state_dict = torch.load(weight_file)
+        state_dict = torch.load(weight_file,"cuda:1")
         if "fc_v.weight" in state_dict.keys():
             agent, cfg = utils.load_agent(weight_file, overwrite)
             agents.append(agent)
             sad.append(cfg["sad"] if "sad" in cfg else cfg["greedy_extra"])
             hide_action.append(bool(cfg["hide_action"]))
         else:
-            agent = utils.load_supervised_agent(weight_file, "cuda:0")
+            agent = utils.load_supervised_agent(weight_file, "cuda:1")
             agents.append(agent)
             sad.append(False)
             hide_action.append(False)

@@ -69,7 +69,7 @@ def parse_args():
     parser.add_argument("--save_dir", type=str, default="exps/sparta")
     parser.add_argument("--num_search", type=int, default=10000)
     parser.add_argument("--threshold", type=float, default=0.05)
-    parser.add_argument("--device", type=str, default="cuda:0")
+    parser.add_argument("--device", type=str, default="cuda:7")
     parser.add_argument("--num_thread", type=int, default=10)
     parser.add_argument("--weight_file", type=str, default=None)
     parser.add_argument("--num_player", type=int, default=2)

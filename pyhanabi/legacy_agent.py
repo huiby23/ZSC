@@ -176,12 +176,12 @@ class LegacyAgent(torch.jit.ScriptModule):
 
 def load_legacy_agent(weight_file):
     config = utils.get_train_config(weight_file)
-    state_dict = torch.load(weight_file, map_location="cuda:0")
+    state_dict = torch.load(weight_file, map_location="cuda:7")
     in_dim = 838
     hid_dim = 512
     out_dim = 21
     agent = LegacyAgent(
-        "cuda:0",
+        "cuda:7",
         in_dim,
         hid_dim,
         out_dim,

@@ -387,7 +387,7 @@ def parse_args():
 
     parser.add_argument("--aux", type=float, default=0.25)
 
-    parser.add_argument("--train_device", type=str, default="cuda:0")
+    parser.add_argument("--train_device", type=str, default="cuda:7")
     parser.add_argument("--batchsize", type=int, default=128)
     parser.add_argument("--num_epoch", type=int, default=1)
     parser.add_argument("--epoch_len", type=int, default=5000)
@@ -397,7 +397,7 @@ def parse_args():
     parser.add_argument("--weight_file", type=str, required=True)
 
     parser.add_argument("--belief_file", type=str, default="")
-    parser.add_argument("--belief_device", type=str, default="cuda:0")
+    parser.add_argument("--belief_device", type=str, default="cuda:7")
     parser.add_argument("--num_samples", type=int, default=50000)
     parser.add_argument("--maintain_exact_belief", type=int, default=1)
     parser.add_argument("--search_exact_belief", type=int, default=1)
