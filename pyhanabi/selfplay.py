@@ -104,8 +104,7 @@ def parse_args():
     # adversarial training setting
     parser.add_argument('--adversarial_train', action='store_true', default=False,
                     help='whether train agents in adversarial mode')
-    parser.add_argument("--sp_loss_factor", type=float, default=0.5)
-    parser.add_argument("--xp_loss_factor", type=float, default=0.5)
+    parser.add_argument("--sp_ratio", type=float, default=0.99)
 
     args = parser.parse_args()
     if args.off_belief == 1:
@@ -202,8 +201,7 @@ if __name__ == "__main__":
         args.boltzmann_act,
         False,  # uniform priority
         args.off_belief,
-        args.sp_loss_factor,
-        args.xp_loss_factor,
+        args.sp_ratio,
         )
 
 
@@ -241,7 +239,6 @@ if __name__ == "__main__":
         adv_agent = adv_agent.to(args.train_device)
         xp_optim = torch.optim.Adam(adv_agent.online_net_xp.parameters(), lr=args.lr, eps=args.eps)
         sp_optim = torch.optim.Adam(adv_agent.online_net_sp.parameters(), lr=args.lr, eps=args.eps)
-        plc_optim = torch.optim.Adam(adv_agent.policy_net.parameters(), lr=args.actor_lr, eps=args.eps)
         print(adv_agent)
         eval_adv_agent = adv_agent.clone(args.train_device, {"vdn": False, "boltzmann_act": False})        
 
@@ -387,12 +384,6 @@ if __name__ == "__main__":
                 )
                 sp_optim.step()
                 sp_optim.zero_grad()
-
-                plc_g_norm = torch.nn.utils.clip_grad_norm_(
-                    adv_agent.policy_net.parameters(), args.grad_clip
-                )
-                plc_optim.step()
-                plc_optim.zero_grad()
 
                 torch.cuda.synchronize()
                 stopwatch.time("update model")

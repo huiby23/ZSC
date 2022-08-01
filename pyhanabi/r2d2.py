@@ -494,8 +494,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         boltzmann_act,
         uniform_priority,
         off_belief,
-        sp_loss_factor,
-        xp_loss_factor,
+        sp_ratio,
         greedy=False,
         nhead=None,
         nlayer=None,
@@ -507,7 +506,6 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
             self.target_net_xp = FFWDNet(in_dim, hid_dim, out_dim).to(device)
             self.online_net_sp = FFWDNet(in_dim, hid_dim, out_dim).to(device)
             self.target_net_sp = FFWDNet(in_dim, hid_dim, out_dim).to(device)
-            self.policy_net = FFWDNet(in_dim, hid_dim, out_dim).to(device)
         elif net == "publ-lstm":
             self.online_net_xp = PublicLSTMNet(
                 device, in_dim, hid_dim, out_dim, num_lstm_layer
@@ -519,9 +517,6 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
                 device, in_dim, hid_dim, out_dim, num_lstm_layer
             ).to(device)
             self.target_net_sp = PublicLSTMNet(
-                device, in_dim, hid_dim, out_dim, num_lstm_layer
-            ).to(device)
-            self.policy_net = PublicLSTMNet(
                 device, in_dim, hid_dim, out_dim, num_lstm_layer
             ).to(device)
         elif net == "lstm":
@@ -537,9 +532,6 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
             self.target_net_sp = LSTMNet(
                 device, in_dim, hid_dim, out_dim, num_lstm_layer
             ).to(device)
-            self.policy_net = LSTMPlcNet(
-                device, in_dim, hid_dim, out_dim, num_lstm_layer
-            ).to(device)
         elif net == "transformer":
             self.online_net_xp = TransformerNet(
                 device, in_dim, hid_dim, out_dim, nhead, nlayer, max_len
@@ -551,9 +543,6 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
                 device, in_dim, hid_dim, out_dim, nhead, nlayer, max_len
             )
             self.target_net_sp = TransformerNet(
-                device, in_dim, hid_dim, out_dim, nhead, nlayer, max_len
-            )
-            self.policy_net = TransformerNet(
                 device, in_dim, hid_dim, out_dim, nhead, nlayer, max_len
             )
         else:
@@ -578,12 +567,14 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         self.nhead = nhead
         self.nlayer = nlayer
         self.max_len = max_len
-        self.sp_loss_factor = sp_loss_factor
-        self.xp_loss_factor = xp_loss_factor
+        self.sp_ratio = sp_ratio
 
     @torch.jit.script_method
     def get_h0(self, batchsize: int) -> Dict[str, torch.Tensor]:
-        return self.online_net_sp.get_h0(batchsize)
+        hid_sp = self.online_net_sp.get_h0(batchsize)
+        hid_xp = self.online_net_xp.get_h0(batchsize)
+        hid = {"h0":torch.cat([hid_sp["h0"],hid_xp["h0"]],0), "c0":torch.cat([hid_sp["c0"],hid_xp["c0"]],0)}
+        return hid
 
     def clone(self, device, overwrite=None):
         if overwrite is None:
@@ -625,9 +616,14 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         legal_move: torch.Tensor,
         hid: Dict[str, torch.Tensor],
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        adv, new_hid = self.policy_net.act(priv_s, publ_s, hid)
-        legal_adv = (1 + adv - adv.min()) * legal_move
+        hid_sp = {"h0":hid["h0"][0,:],"c0":hid["c0"][0,:]}
+        hid_xp = {"h0":hid["h0"][1,:],"c0":hid["c0"][1,:]}
+        adv_sp, new_hid_sp = self.online_net_sp.act(priv_s, publ_s, hid_sp)
+        adv_xp, new_hid_xp = self.online_net_xp.act(priv_s, publ_s, hid_xp)
+        combined_adv = adv_sp * self.sp_ratio - adv_xp * (1 - self.sp_ratio)
+        legal_adv = (1 + combined_adv - combined_adv.min()) * legal_move
         greedy_action = legal_adv.argmax(1).detach()
+        new_hid = {"h0":torch.cat([hid_sp["h0"],hid_xp["h0"]],0), "c0":torch.cat([hid_sp["c0"],hid_xp["c0"]],0)}
         return greedy_action, new_hid
 
 
@@ -641,9 +637,14 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         hid: Dict[str, torch.Tensor],
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], torch.Tensor]:
         temperature = temperature.unsqueeze(1)
-        adv, new_hid = self.policy_net.act(priv_s, publ_s, hid)
-        assert adv.dim() == temperature.dim()
-        logit = adv / temperature
+        hid_sp = {"h0":hid["h0"][0,:],"c0":hid["c0"][0,:]}
+        hid_xp = {"h0":hid["h0"][1,:],"c0":hid["c0"][1,:]}
+        adv_sp, new_hid_sp = self.online_net_sp.act(priv_s, publ_s, hid_sp)
+        adv_xp, new_hid_xp = self.online_net_xp.act(priv_s, publ_s, hid_xp)
+        combined_adv = adv_sp * self.sp_ratio - adv_xp * (1 - self.sp_ratio)
+        new_hid = {"h0":torch.cat([hid_sp["h0"],hid_xp["h0"]],0), "c0":torch.cat([hid_sp["c0"],hid_xp["c0"]],0)}
+        assert combined_adv.dim() == temperature.dim()
+        logit = combined_adv / temperature
         legal_logit = logit - (1 - legal_move) * 1e30
         assert legal_logit.dim() == 2
         prob = nn.functional.softmax(legal_logit, 1)
@@ -778,7 +779,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         terminal = input_["terminal"]
         bootstrap = input_["bootstrap"]
         seq_len = input_["seq_len"]
-        err, _, _, _ = self.td_error_and_p_loss_xp(
+        err, _, _ = self.td_error_and_p_loss_xp(
             obs, hid, action, reward, terminal, bootstrap, seq_len,
         )
         priority = err.abs()
@@ -814,7 +815,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         terminal = input_["terminal"]
         bootstrap = input_["bootstrap"]
         seq_len = input_["seq_len"]
-        err, _, _, _ = self.td_error_and_p_loss_sp(
+        err, _, _ = self.td_error_and_p_loss_sp(
             obs, hid, action, reward, terminal, bootstrap, seq_len,
         )
         priority = err.abs()
@@ -843,19 +844,21 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
 
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
-        greedy_a, out_q = self.policy_net(priv_s, publ_s, legal_move, hid)
+        hid_sp = {"h0":hid["h0"][0,:],"c0":hid["c0"][0,:]}
+        hid_xp = {"h0":hid["h0"][1,:],"c0":hid["c0"][1,:]}
+        adv_sp, new_hid_sp = self.online_net_sp.act(priv_s, publ_s, hid_sp)
+        adv_xp, new_hid_xp = self.online_net_xp.act(priv_s, publ_s, hid_xp)
+        combined_adv = adv_sp * self.sp_ratio - adv_xp * (1 - self.sp_ratio)
+        legal_adv = (1 + combined_adv - combined_adv.min()) * legal_move
+        greedy_action = legal_adv.argmax(1).detach()
 
-        online_qa, desired_a, online_q, lstm_o = self.online_net_sp(
-            priv_s, publ_s, legal_move, action, hid
+        online_qa, _, online_q, lstm_o = self.online_net_sp(
+            priv_s, publ_s, legal_move, action, hid_sp
         )
 
         target_qa, _, target_q, _ = self.target_net_sp(
-            priv_s, publ_s, legal_move, greedy_a, hid
-        )   
-        p_loss = -1.*out_q.gather(2,desired_a.unsqueeze(-1)).mean()
-        p_loss += torch.log(torch.exp(out_q).sum(dim=-1)).mean()
-        p_loss *= self.sp_loss_factor
-        #p_loss = self.sp_loss_factor*nn.CrossEntropyLoss(out_q, desired_a)         
+            priv_s, publ_s, legal_move, greedy_action, hid_sp
+        )         
 
         target_qa = torch.cat(
             [target_qa[self.multi_step :], target_qa[: self.multi_step]], 0
@@ -869,7 +872,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         err = (target.detach() - online_qa) * mask
         if self.off_belief and "valid_fict" in obs:
             err = err * obs["valid_fict"]
-        return err, lstm_o, online_q, p_loss
+        return err, lstm_o, online_q
 
     @torch.jit.script_method
     def td_error_and_p_loss_xp(
@@ -893,19 +896,21 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
 
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
-        greedy_a, out_q = self.policy_net(priv_s, publ_s, legal_move, hid)
+        hid_sp = {"h0":hid["h0"][0,:],"c0":hid["c0"][0,:]}
+        hid_xp = {"h0":hid["h0"][1,:],"c0":hid["c0"][1,:]}
+        adv_sp, new_hid_sp = self.online_net_sp.act(priv_s, publ_s, hid_sp)
+        adv_xp, new_hid_xp = self.online_net_xp.act(priv_s, publ_s, hid_xp)
+        combined_adv = adv_sp * self.sp_ratio - adv_xp * (1 - self.sp_ratio)
+        legal_adv = (1 + combined_adv - combined_adv.min()) * legal_move
+        greedy_action = legal_adv.argmax(1).detach()
 
         online_qa, desired_a, online_q, lstm_o = self.online_net_xp(
-            priv_s, publ_s, legal_move, action, hid
+            priv_s, publ_s, legal_move, action, hid_xp
         )
 
         target_qa, _, target_q, _ = self.target_net_xp(
-            priv_s, publ_s, legal_move, greedy_a, hid
+            priv_s, publ_s, legal_move, greedy_action, hid_xp
         )
-        p_loss = -1.*out_q.gather(2,desired_a.unsqueeze(-1)).mean()
-        p_loss += torch.log(torch.exp(out_q).sum(dim=-1)).mean()
-        p_loss *= self.xp_loss_factor
-        #p_loss = self.xp_loss_factor*nn.CrossEntropyLoss(out_q, desired_a)
 
         target_qa = torch.cat(
             [target_qa[self.multi_step :], target_qa[: self.multi_step]], 0
@@ -919,7 +924,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         err = (target.detach() - online_qa) * mask
         if self.off_belief and "valid_fict" in obs:
             err = err * obs["valid_fict"]
-        return err, lstm_o, online_q, p_loss
+        return err, lstm_o, online_q
 
     def aux_task_iql(self, lstm_o, hand, seq_len, rl_loss_size, stat, is_xp):
         seq_size, bsize, _ = hand.size()
@@ -945,7 +950,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         return agg_priority
 
     def q_xp_loss(self, batch, aux_weight, stat):
-        err, lstm_o, online_q, p_loss = self.td_error_and_p_loss_xp(
+        err, lstm_o, online_q = self.td_error_and_p_loss_xp(
             batch.obs,
             batch.h0,
             batch.action,
@@ -958,14 +963,12 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
             err, torch.zeros_like(err), reduction="none"
         )
         rl_loss = rl_loss.sum(0)
-        policy_loss = p_loss.sum(0)
-        stat["p_loss"].feed((policy_loss / batch.seq_len).mean().item())
         stat["rl_loss"].feed((rl_loss / batch.seq_len).mean().item())
 
         priority = err.abs()
         priority = self.aggregate_priority(priority, batch.seq_len).detach().cpu()
 
-        loss = rl_loss + policy_loss
+        loss = rl_loss
         if aux_weight <= 0:
             return loss, priority, online_q
 
@@ -977,12 +980,12 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
             stat,
             True,
         )
-        loss = rl_loss + policy_loss + aux_weight * pred
+        loss = rl_loss + aux_weight * pred
 
         return loss, priority, online_q
 
     def q_sp_loss(self, batch, aux_weight, stat):
-        err, lstm_o, online_q, p_loss = self.td_error_and_p_loss_sp(
+        err, lstm_o, online_q = self.td_error_and_p_loss_sp(
             batch.obs,
             batch.h0,
             batch.action,
@@ -995,14 +998,12 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
             err, torch.zeros_like(err), reduction="none"
         )
         rl_loss = rl_loss.sum(0)
-        policy_loss = p_loss.sum(0)
-        stat["p_loss"].feed((policy_loss / batch.seq_len).mean().item())
         stat["rl_loss"].feed((rl_loss / batch.seq_len).mean().item())
 
         priority = err.abs()
         priority = self.aggregate_priority(priority, batch.seq_len).detach().cpu()
 
-        loss = rl_loss + policy_loss
+        loss = rl_loss
         if aux_weight <= 0:
             return loss, priority, online_q
 
@@ -1014,7 +1015,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
             stat,
             False,
         )
-        loss = rl_loss + policy_loss + aux_weight * pred
+        loss = rl_loss + aux_weight * pred
 
         return loss, priority, online_q
 
