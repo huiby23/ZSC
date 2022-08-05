@@ -91,10 +91,15 @@ class R2D2Agent(torch.jit.ScriptModule):
         self.nhead = nhead
         self.nlayer = nlayer
         self.max_len = max_len
+        self.sbopt_act = False
 
     @torch.jit.script_method
     def get_h0(self, batchsize: int) -> Dict[str, torch.Tensor]:
         return self.online_net.get_h0(batchsize)
+
+    def activate_suboptimal(self, suboptimal_ratio):
+        self.sbopt_act = True
+        self.suboptimal_ratio = suboptimal_ratio
 
     def clone(self, device, overwrite=None):
         if overwrite is None:
@@ -136,6 +141,11 @@ class R2D2Agent(torch.jit.ScriptModule):
         adv, new_hid = self.online_net.act(priv_s, publ_s, hid)
         legal_adv = (1 + adv - adv.min()) * legal_move
         greedy_action = legal_adv.argmax(1).detach()
+
+        if self.sbopt_act:
+            legal_adv 
+            subopt_action = 
+
         return greedy_action, new_hid
 
     @torch.jit.script_method
@@ -573,7 +583,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
     def get_h0(self, batchsize: int) -> Dict[str, torch.Tensor]:
         hid_sp = self.online_net_sp.get_h0(batchsize)
         hid_xp = self.online_net_xp.get_h0(batchsize)
-        hid = {"h0":torch.cat([hid_sp["h0"],hid_xp["h0"]],0), "c0":torch.cat([hid_sp["c0"],hid_xp["c0"]],0)}
+        hid = {"hsp":hid_sp["h0"],"hxp":hid_xp["h0"],"csp":hid_sp["c0"],"cxp":hid_xp["c0"]}
         return hid
 
     def clone(self, device, overwrite=None):
@@ -593,8 +603,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
             overwrite.get("boltzmann_act", self.boltzmann),
             self.uniform_priority,
             self.off_belief,
-            self.sp_loss_factor,
-            self.xp_loss_factor,
+            self.sp_ratio,
             self.greedy,
             nhead=self.nhead,
             nlayer=self.nlayer,
@@ -616,14 +625,14 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         legal_move: torch.Tensor,
         hid: Dict[str, torch.Tensor],
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        hid_sp = {"h0":hid["h0"][0,:],"c0":hid["c0"][0,:]}
-        hid_xp = {"h0":hid["h0"][1,:],"c0":hid["c0"][1,:]}
+        hid_sp = {"h0":hid["hsp"],"c0":hid["csp"]}
+        hid_xp = {"h0":hid["hxp"],"c0":hid["cxp"]}
         adv_sp, new_hid_sp = self.online_net_sp.act(priv_s, publ_s, hid_sp)
         adv_xp, new_hid_xp = self.online_net_xp.act(priv_s, publ_s, hid_xp)
         combined_adv = adv_sp * self.sp_ratio - adv_xp * (1 - self.sp_ratio)
         legal_adv = (1 + combined_adv - combined_adv.min()) * legal_move
         greedy_action = legal_adv.argmax(1).detach()
-        new_hid = {"h0":torch.cat([hid_sp["h0"],hid_xp["h0"]],0), "c0":torch.cat([hid_sp["c0"],hid_xp["c0"]],0)}
+        new_hid = {"hsp":new_hid_sp["h0"],"hxp":new_hid_xp["h0"],"csp":new_hid_sp["c0"],"cxp":new_hid_xp["c0"]}
         return greedy_action, new_hid
 
 
@@ -637,12 +646,12 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         hid: Dict[str, torch.Tensor],
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], torch.Tensor]:
         temperature = temperature.unsqueeze(1)
-        hid_sp = {"h0":hid["h0"][0,:],"c0":hid["c0"][0,:]}
-        hid_xp = {"h0":hid["h0"][1,:],"c0":hid["c0"][1,:]}
+        hid_sp = {"h0":hid["hsp"],"c0":hid["csp"]}
+        hid_xp = {"h0":hid["hxp"],"c0":hid["cxp"]}
         adv_sp, new_hid_sp = self.online_net_sp.act(priv_s, publ_s, hid_sp)
         adv_xp, new_hid_xp = self.online_net_xp.act(priv_s, publ_s, hid_xp)
         combined_adv = adv_sp * self.sp_ratio - adv_xp * (1 - self.sp_ratio)
-        new_hid = {"h0":torch.cat([hid_sp["h0"],hid_xp["h0"]],0), "c0":torch.cat([hid_sp["c0"],hid_xp["c0"]],0)}
+        new_hid = {"hsp":new_hid_sp["h0"],"hxp":new_hid_xp["h0"],"csp":new_hid_sp["c0"],"cxp":new_hid_xp["c0"]}
         assert combined_adv.dim() == temperature.dim()
         logit = combined_adv / temperature
         legal_logit = logit - (1 - legal_move) * 1e30
@@ -674,7 +683,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         else:
             bsize, num_player = obs["priv_s"].size()[0], 1
 
-        hid = {"h0": obs["h0"], "c0": obs["c0"]}
+        hid = {"hxp": obs["hxp"], "cxp": obs["cxp"], "hsp": obs["hsp"], "csp": obs["csp"]}
 
         if torch.rand(1)>0.5:
             if self.boltzmann:
@@ -712,8 +721,10 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
             # rand = rand.view(bsize, num_player)
 
         reply["a"] = action.detach().cpu()
-        reply["h0"] = new_hid["h0"].detach().cpu()
-        reply["c0"] = new_hid["c0"].detach().cpu()
+        reply["hxp"] = new_hid["hxp"].detach().cpu()
+        reply["hsp"] = new_hid["hsp"].detach().cpu()
+        reply["cxp"] = new_hid["cxp"].detach().cpu()
+        reply["csp"] = new_hid["csp"].detach().cpu()
         return reply
 
     @torch.jit.script_method
@@ -773,7 +784,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         if self.off_belief:
             obs["target"] = input_["target"]
 
-        hid = {"h0": input_["h0"], "c0": input_["c0"]}
+        hid = {"hxp": input_["hxp"], "cxp": input_["cxp"], "hsp": input_["hsp"], "csp": input_["csp"]}
         action = {"a": input_["a"]}
         reward = input_["reward"]
         terminal = input_["terminal"]
@@ -809,7 +820,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         if self.off_belief:
             obs["target"] = input_["target"]
 
-        hid = {"h0": input_["h0"], "c0": input_["c0"]}
+        hid = {"hxp": input_["hxp"], "cxp": input_["cxp"], "hsp": input_["hsp"], "csp": input_["csp"]}
         action = {"a": input_["a"]}
         reward = input_["reward"]
         terminal = input_["terminal"]
@@ -832,7 +843,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         terminal: torch.Tensor,
         bootstrap: torch.Tensor,
         seq_len: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         max_seq_len = obs["priv_s"].size(0)
         priv_s = obs["priv_s"]
         publ_s = obs["publ_s"]
@@ -844,13 +855,13 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
 
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
-        hid_sp = {"h0":hid["h0"][0,:],"c0":hid["c0"][0,:]}
-        hid_xp = {"h0":hid["h0"][1,:],"c0":hid["c0"][1,:]}
-        adv_sp, new_hid_sp = self.online_net_sp.act(priv_s, publ_s, hid_sp)
-        adv_xp, new_hid_xp = self.online_net_xp.act(priv_s, publ_s, hid_xp)
+        hid_sp = {"h0":hid["hsp"],"c0":hid["csp"]}
+        hid_xp = {"h0":hid["hxp"],"c0":hid["cxp"]}
+        adv_sp = self.online_net_sp.fast_act(priv_s, publ_s, hid_sp)
+        adv_xp = self.online_net_xp.fast_act(priv_s, publ_s, hid_xp)
         combined_adv = adv_sp * self.sp_ratio - adv_xp * (1 - self.sp_ratio)
         legal_adv = (1 + combined_adv - combined_adv.min()) * legal_move
-        greedy_action = legal_adv.argmax(1).detach()
+        greedy_action = legal_adv.argmax(-1).detach()
 
         online_qa, _, online_q, lstm_o = self.online_net_sp(
             priv_s, publ_s, legal_move, action, hid_sp
@@ -884,7 +895,7 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         terminal: torch.Tensor,
         bootstrap: torch.Tensor,
         seq_len: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         max_seq_len = obs["priv_s"].size(0)
         priv_s = obs["priv_s"]
         publ_s = obs["publ_s"]
@@ -896,13 +907,13 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
 
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
-        hid_sp = {"h0":hid["h0"][0,:],"c0":hid["c0"][0,:]}
-        hid_xp = {"h0":hid["h0"][1,:],"c0":hid["c0"][1,:]}
-        adv_sp, new_hid_sp = self.online_net_sp.act(priv_s, publ_s, hid_sp)
-        adv_xp, new_hid_xp = self.online_net_xp.act(priv_s, publ_s, hid_xp)
+        hid_sp = {"h0":hid["hsp"],"c0":hid["csp"]}
+        hid_xp = {"h0":hid["hxp"],"c0":hid["cxp"]}
+        adv_sp = self.online_net_sp.fast_act(priv_s, publ_s, hid_sp)
+        adv_xp = self.online_net_xp.fast_act(priv_s, publ_s, hid_xp)
         combined_adv = adv_sp * self.sp_ratio - adv_xp * (1 - self.sp_ratio)
         legal_adv = (1 + combined_adv - combined_adv.min()) * legal_move
-        greedy_action = legal_adv.argmax(1).detach()
+        greedy_action = legal_adv.argmax(-1).detach()
 
         online_qa, desired_a, online_q, lstm_o = self.online_net_xp(
             priv_s, publ_s, legal_move, action, hid_xp

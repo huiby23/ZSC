@@ -211,6 +211,32 @@ class LSTMNet(torch.jit.ScriptModule):
         return a, {"h0": h, "c0": c}
 
     @torch.jit.script_method
+    def fast_act(
+        self,
+        priv_s: torch.Tensor,
+        publ_s: torch.Tensor,
+        hid: Dict[str, torch.Tensor],
+    ) -> torch.Tensor:
+        assert (
+            priv_s.dim() == 3 or priv_s.dim() == 2
+        ), "dim = 3/2, [seq_len(optional), batch, dim]"
+
+        one_step = False
+        if priv_s.dim() == 2:
+            priv_s = priv_s.unsqueeze(0)
+            publ_s = publ_s.unsqueeze(0)
+            one_step = True
+
+        x = self.net(priv_s)
+        if len(hid) == 0:
+            o, _ = self.lstm(x)
+        else:
+            o, _ = self.lstm(x, (hid["h0"], hid["c0"]))
+        a = self.fc_a(o)
+
+        return a
+
+    @torch.jit.script_method
     def forward(
         self,
         priv_s: torch.Tensor,

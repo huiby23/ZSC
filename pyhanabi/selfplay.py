@@ -105,6 +105,8 @@ def parse_args():
     parser.add_argument('--adversarial_train', action='store_true', default=False,
                     help='whether train agents in adversarial mode')
     parser.add_argument("--sp_ratio", type=float, default=0.99)
+    parser.add_argument("--suboptimal_ratio", type=float, default=0.0)
+    parser.add_argument("--sbopt_starts", type=int, default=0)
 
     args = parser.parse_args()
     if args.off_belief == 1:
@@ -444,7 +446,7 @@ if __name__ == "__main__":
             )
 
             adv_model_saved = adv_saver.save_adv(
-                None, adv_agent.online_net_xp.state_dict(), adv_agent.online_net_sp.state_dict(), adv_agent.policy_net.state_dict(), xp_score, force_save_name=None
+                None, adv_agent.online_net_xp.state_dict(), adv_agent.online_net_sp.state_dict(), xp_score, force_save_name=None
             )
             print(
                 "epoch %d, sp eval score: %.4f, perfect: %.2f, model saved: %s"
