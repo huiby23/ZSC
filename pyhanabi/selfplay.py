@@ -106,7 +106,7 @@ def parse_args():
                     help='whether train agents in adversarial mode')
     parser.add_argument("--sp_ratio", type=float, default=0.99)
     parser.add_argument("--suboptimal_ratio", type=float, default=0.0)
-    parser.add_argument("--sbopt_starts", type=int, default=0)
+    parser.add_argument("--sbopt_starts", type=int, default=1)
 
     args = parser.parse_args()
     if args.off_belief == 1:
@@ -462,6 +462,10 @@ if __name__ == "__main__":
             stat.reset()
             stopwatch.reset()
 
+            if args.suboptimal_ratio > 0:
+                if epoch == args.sbopt_starts:
+                    agent.activate_suboptimal(args.suboptimal_ratio)
+
             for batch_idx in range(args.epoch_len):
                 num_update = batch_idx + epoch * args.epoch_len
                 if num_update % args.num_update_between_sync == 0:
@@ -476,6 +480,8 @@ if __name__ == "__main__":
                 stopwatch.time("sample data")
 
                 loss, priority, online_q = agent.loss(batch, args.aux_weight, stat)
+
+                
                 if clone_bot is not None and args.clone_weight > 0:
                     bc_loss = agent.behavior_clone_loss(
                         online_q, batch, args.clone_t, clone_bot, stat

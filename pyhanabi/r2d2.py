@@ -143,8 +143,11 @@ class R2D2Agent(torch.jit.ScriptModule):
         greedy_action = legal_adv.argmax(1).detach()
 
         if self.sbopt_act:
-            legal_adv 
-            subopt_action = 
+            adv_mask = (legal_adv != legal_adv.max(1,keepdim=True)[0])
+            subopt_adv = adv_mask * legal_adv
+            subopt_action = subopt_adv.argmax(1).detach()
+            if torch.rand(1) < self.suboptimal_ratio:
+                greedy_action = subopt_action
 
         return greedy_action, new_hid
 
