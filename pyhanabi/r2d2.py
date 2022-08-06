@@ -46,6 +46,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         nhead=None,
         nlayer=None,
         max_len=None,
+        suboptimal_ratio=0.0,
     ):
         super().__init__()
         if net == "ffwd":
@@ -92,6 +93,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         self.nlayer = nlayer
         self.max_len = max_len
         self.sbopt_act = False
+        self.suboptimal_ratio = suboptimal_ratio
 
     @torch.jit.script_method
     def get_h0(self, batchsize: int) -> Dict[str, torch.Tensor]:
@@ -100,6 +102,7 @@ class R2D2Agent(torch.jit.ScriptModule):
     def activate_suboptimal(self, suboptimal_ratio):
         self.sbopt_act = True
         self.suboptimal_ratio = suboptimal_ratio
+        return
 
     def clone(self, device, overwrite=None):
         if overwrite is None:
@@ -122,6 +125,7 @@ class R2D2Agent(torch.jit.ScriptModule):
             nhead=self.nhead,
             nlayer=self.nlayer,
             max_len=self.max_len,
+            suboptimal_ratio=self.suboptimal_ratio,
         )
         cloned.load_state_dict(self.state_dict())
         cloned.train(self.training)

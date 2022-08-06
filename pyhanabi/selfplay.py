@@ -464,7 +464,7 @@ if __name__ == "__main__":
 
             if args.suboptimal_ratio > 0:
                 if epoch == args.sbopt_starts:
-                    agent.activate_suboptimal(args.suboptimal_ratio)
+                    agent.activate_suboptimal(float(args.suboptimal_ratio))
 
             for batch_idx in range(args.epoch_len):
                 num_update = batch_idx + epoch * args.epoch_len
@@ -512,8 +512,6 @@ if __name__ == "__main__":
             count_factor = args.num_player if args.method == "vdn" else 1
             print("EPOCH: %d" % epoch)
             tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
-            tachometer.lap(xp_replay_buffer, args.epoch_len * args.batchsize, count_factor)
-            tachometer.lap(sp_replay_buffer, args.epoch_len * args.batchsize, count_factor)
             stopwatch.summary()
             stat.summary(epoch)
             
@@ -529,6 +527,7 @@ if __name__ == "__main__":
                 0,  # explore eps
                 args.sad,
                 args.hide_action,
+                device = args.train_device,
             )
 
             force_save_name = None
