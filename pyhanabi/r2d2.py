@@ -92,17 +92,11 @@ class R2D2Agent(torch.jit.ScriptModule):
         self.nhead = nhead
         self.nlayer = nlayer
         self.max_len = max_len
-        self.sbopt_act = False
         self.suboptimal_ratio = suboptimal_ratio
 
     @torch.jit.script_method
     def get_h0(self, batchsize: int) -> Dict[str, torch.Tensor]:
         return self.online_net.get_h0(batchsize)
-
-    def activate_suboptimal(self, suboptimal_ratio):
-        self.sbopt_act = True
-        self.suboptimal_ratio = suboptimal_ratio
-        return
 
     def clone(self, device, overwrite=None):
         if overwrite is None:
@@ -146,11 +140,14 @@ class R2D2Agent(torch.jit.ScriptModule):
         legal_adv = (1 + adv - adv.min()) * legal_move
         greedy_action = legal_adv.argmax(1).detach()
 
-        if self.sbopt_act:
-            adv_mask = (legal_adv != legal_adv.max(1,keepdim=True)[0])
-            subopt_adv = adv_mask * legal_adv
-            subopt_action = subopt_adv.argmax(1).detach()
+        if self.suboptimal_ratio > 0:
             if torch.rand(1) < self.suboptimal_ratio:
+                adv_mask = (legal_adv != legal_adv.max(1,keepdim=True)[0])
+                subopt_adv = adv_mask * legal_adv
+                subopt_action = subopt_adv.argmax(1).detach()
+                print('use suboptimal action!')
+                print('best action:', greedy_action)
+                print('subopt action:', subopt_action)
                 greedy_action = subopt_action
 
         return greedy_action, new_hid

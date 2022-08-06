@@ -106,7 +106,6 @@ def parse_args():
                     help='whether train agents in adversarial mode')
     parser.add_argument("--sp_ratio", type=float, default=0.99)
     parser.add_argument("--suboptimal_ratio", type=float, default=0.0)
-    parser.add_argument("--sbopt_starts", type=int, default=1)
 
     args = parser.parse_args()
     if args.off_belief == 1:
@@ -185,6 +184,7 @@ if __name__ == "__main__":
         args.boltzmann_act,
         False,  # uniform priority
         args.off_belief,
+        suboptimal_ratio = args.suboptimal_ratio,
     )
     agent.sync_target_with_online()
     
@@ -461,10 +461,6 @@ if __name__ == "__main__":
             tachometer.start()
             stat.reset()
             stopwatch.reset()
-
-            if args.suboptimal_ratio > 0:
-                if epoch == args.sbopt_starts:
-                    agent.activate_suboptimal(float(args.suboptimal_ratio))
 
             for batch_idx in range(args.epoch_len):
                 num_update = batch_idx + epoch * args.epoch_len
