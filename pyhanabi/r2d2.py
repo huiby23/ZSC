@@ -143,12 +143,10 @@ class R2D2Agent(torch.jit.ScriptModule):
         if self.suboptimal_ratio > 0:
             if torch.rand(1) < self.suboptimal_ratio:
                 adv_mask = (legal_adv != legal_adv.max(1,keepdim=True)[0])
-                subopt_adv = adv_mask * legal_adv
+                subopt_adv = adv_mask * legal_adv + 1e-3
+                subopt_adv = subopt_adv * legal_move
                 subopt_action = subopt_adv.argmax(1).detach()
-                print('use suboptimal action!')
-                print('best action:', greedy_action)
-                print('subopt action:', subopt_action)
-                greedy_action = subopt_action
+                return subopt_action, new_hid
 
         return greedy_action, new_hid
 
