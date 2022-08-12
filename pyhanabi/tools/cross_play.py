@@ -52,35 +52,51 @@ def filter_exclude(entries, excludes):
     return keep
 
 
-def cross_play(models, num_player, num_game, seed):
-    combs = list(itertools.combinations_with_replacement(models, num_player))
+def cross_play(models, num_player, num_game, seed, device, record_name=None):
+    if args.root is not None:
+        combs = list(itertools.combinations_with_replacement(models, num_player))
+    else:
+        combs = [models]
     perfs = defaultdict(list)
     for comb in combs:
         num_model = len(set(comb))
-        score = evaluate_saved_model(comb, num_game, seed, 0)[0]
+        score = evaluate_saved_model(comb, num_game, seed, 0, device=device, record_name=record_name)[0]
         perfs[num_model].append(score)
-
-    for num_model, scores in perfs.items():
-        print(
-            f"#model: {num_model}, #groups {len(scores)}, "
-            f"score: {np.mean(scores):.2f} "
-            f"+/- {np.std(scores) / np.sqrt(len(scores) - 1):.2f}"
-        )
+    if args.root is not None:
+        for num_model, scores in perfs.items():
+            print(
+                f"#model: {num_model}, #groups {len(scores)}, "
+                f"score: {np.mean(scores):.2f} "
+                f"+/- {np.std(scores) / np.sqrt(len(scores) - 1):.2f}"
+            )
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--root", default=None, type=str, required=True)
-parser.add_argument("--num_player", default=None, type=int, required=True)
+parser.add_argument("--root", default=None, type=str)
+parser.add_argument("--num_player", default=None, type=int, required=False)
+parser.add_argument("--device", default="cuda:0", type=str)
 parser.add_argument("--include", default=None, type=str, nargs="+")
 parser.add_argument("--exclude", default=None, type=str, nargs="+")
+parser.add_argument("--model_a", default=None, type=str)
+parser.add_argument("--model_b", default=None, type=str)
+parser.add_argument("--model_ap", default=None, type=str)
+parser.add_argument("--model_bp", default=None, type=str)
+parser.add_argument("--record_name", default=None, type=str)
 
 args = parser.parse_args()
 
-models = common_utils.get_all_files(args.root, "model0.pthw")
-if args.include is not None:
-    models = filter_include(models, args.include)
-if args.exclude is not None:
-    models = filter_exclude(models, args.exclude)
+if args.root is not None:
+    models = common_utils.get_all_files(args.root, "model0.pthw")
+    if args.include is not None:
+        models = filter_include(models, args.include)
+    if args.exclude is not None:
+        models = filter_exclude(models, args.exclude)
 
-pprint.pprint(models)
-cross_play(models, args.num_player, 1000, 1)
+    pprint.pprint(models)
+    cross_play(models, args.num_player, 1000, 1, args.device, args.record_name)
+else:
+    if args.record_name is not None:
+        models = [args.model_a, args.model_bp, args.model_b, args.model_ap]
+    else:
+        models = [args.model_a, args.model_b]
+    cross_play(models, args.num_player, 1000, 1, args.device, args.record_name)

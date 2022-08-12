@@ -141,11 +141,9 @@ def load_agent(weight_file, overwrite):
     """
     if weight_file == "legacy":
         from legacy_agent import load_legacy_agent
-
         return load_legacy_agent()
     if "arxiv" in weight_file:
         from legacy_agent import load_legacy_agent
-
         return load_legacy_agent(weight_file)
 
     print("loading file from: ", weight_file)
