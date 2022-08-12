@@ -42,6 +42,7 @@ class R2D2Actor {
       , shuffleColor_(shuffleColor)
       , hideAction_(hideAction)
       , trinary_(trinary)
+      , isRef_(false)
       , batchsize_(vdn_ ? numPlayer_ : 1)
       , playerEps_(batchsize_)
       , playerTemp_(batchsize_)
@@ -52,6 +53,34 @@ class R2D2Actor {
   }
 
   // simpler constructor for eval mode
+  R2D2Actor(
+      std::shared_ptr<rela::BatchRunner> runner,
+      int numPlayer,
+      int playerIdx,
+      bool vdn,
+      bool sad,
+      bool hideAction,
+      bool isRef)
+      : runner_(std::move(runner))
+      , rng_(1)  // not used in eval mode
+      , numPlayer_(numPlayer)
+      , playerIdx_(playerIdx)
+      , epsList_({0})
+      , vdn_(vdn)
+      , sad_(sad)
+      , shuffleColor_(false)
+      , hideAction_(hideAction)
+      , trinary_(true)
+      , isRef_(isRef)
+      , batchsize_(vdn_ ? numPlayer_ : 1)
+      , playerEps_(batchsize_)
+      , colorPermutes_(batchsize_)
+      , invColorPermutes_(batchsize_)
+      , replayBuffer_(nullptr)
+      , r2d2Buffer_(nullptr) {
+  }
+
+  // simplest constructor for eval mode
   R2D2Actor(
       std::shared_ptr<rela::BatchRunner> runner,
       int numPlayer,
@@ -69,6 +98,7 @@ class R2D2Actor {
       , shuffleColor_(false)
       , hideAction_(hideAction)
       , trinary_(true)
+      , isRef_(false)
       , batchsize_(vdn_ ? numPlayer_ : 1)
       , playerEps_(batchsize_)
       , colorPermutes_(batchsize_)
@@ -86,6 +116,10 @@ class R2D2Actor {
   void reset(const HanabiEnv& env);
 
   void observeBeforeAct(const HanabiEnv& env);
+
+  int recordAct(HanabiEnv& env, const int curPlayer);
+  
+  int beforeAct(const int curPlayer);
 
   void act(HanabiEnv& env, const int curPlayer);
 
@@ -133,6 +167,7 @@ class R2D2Actor {
   const bool shuffleColor_;
   const bool hideAction_;
   const bool trinary_;
+  const bool isRef_;
   const int batchsize_;
 
   std::vector<float> playerEps_;

@@ -189,7 +189,6 @@ class LSTMNet(torch.jit.ScriptModule):
             "h0": hid["h0"].transpose(0, 1).flatten(1, 2).contiguous(),
             "c0": hid["c0"].transpose(0, 1).flatten(1, 2).contiguous(),
         }
-
         priv_s = priv_s.unsqueeze(0)
 
         x = self.net(priv_s)

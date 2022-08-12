@@ -88,6 +88,14 @@ PYBIND11_MODULE(hanalearn, m) {
            bool,     // vdn
            bool,     // sad
            bool>())  // hideAction
+      .def(py::init<
+           std::shared_ptr<rela::BatchRunner>,
+           int,      // numPlayer
+           int,      // playerIdx
+           bool,     // vdn
+           bool,     // sad
+           bool,     // hideAction
+           bool>())  // isref
       .def("set_partners", &R2D2Actor::setPartners)
       .def("set_belief_runner", &R2D2Actor::setBeliefRunner)
       .def("get_success_fict_rate", &R2D2Actor::getSuccessFictRate)
@@ -114,7 +122,16 @@ PYBIND11_MODULE(hanalearn, m) {
       .def(py::init<
            std::vector<std::shared_ptr<HanabiEnv>>,
            std::vector<std::vector<std::shared_ptr<R2D2Actor>>>,
-           bool>());
+           bool>())
+      .def(py::init<
+           std::vector<std::shared_ptr<HanabiEnv>>,
+           std::vector<std::vector<std::shared_ptr<R2D2Actor>>>,
+           bool,
+           bool,
+           std::string>());
+
+
+
 
   // bind search related stuff
   py::class_<search::GameSimulator, std::shared_ptr<search::GameSimulator>>(
