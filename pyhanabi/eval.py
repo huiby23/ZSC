@@ -64,10 +64,10 @@ def evaluate_and_record(
             actors = []
             for i in range(num_player):
                 main_actor = hanalearn.R2D2Actor(
-                    runners[2*i], num_player, i, False, sad[i], hide_action[i]
+                    runners[2*i], num_player, i, False, sad[2*i], hide_action[2*i]
                 )
                 partner_actor = hanalearn.R2D2Actor(
-                    runners[2*i+1], num_player, i, False, sad[i], hide_action[i], True
+                    runners[2*i+1], num_player, i, False, sad[2*i+1], hide_action[2*i+1], True
                 )
                 actors.append(main_actor)
                 actors.append(partner_actor)
@@ -89,40 +89,9 @@ def evaluate_and_record(
     for runner in runners:
         runner.stop()
 
-    main_1_actions = []
-    partner_1_actions = []
-    main_2_actions = []
-    partner_2_actions = []
-    for record_name in record_name_set:
-        print('record name:', record_name)
-        main_1_action = np.loadtxt("../templogs/"+record_name+"_1m.txt")
-        print("load from:", "../templogs/"+record_name+"_1m.txt")
-        print("main_shape:", main_1_action.shape)
-        partner_1_action = np.loadtxt("../templogs/"+record_name+"_1p.txt")
-        print("partner_shape:", partner_1_action.shape)
-        main_2_action = np.loadtxt("../templogs/"+record_name+"_2m.txt")
-        partner_2_action = np.loadtxt("../templogs/"+record_name+"_2p.txt")
-        main_1_actions.append(main_1_action) 
-        partner_1_actions.append(partner_1_action)
-        main_2_actions.append(main_2_action)
-        partner_2_actions.append(partner_2_action)
-            
-        os.remove("../templogs/"+record_name+"_1m.txt")
-        os.remove("../templogs/"+record_name+"_1p.txt")
-        os.remove("../templogs/"+record_name+"_2m.txt")
-        os.remove("../templogs/"+record_name+"_2p.txt")
-    
-    main_1_actions_total = np.hstack(main_1_actions)
-    partner_1_actions_total = np.hstack(partner_1_actions)
-    main_2_actions_total = np.hstack(main_2_actions)
-    partner_2_actions_total = np.hstack(partner_2_actions)
-
-    run_record_1 = np.vstack([main_1_actions_total, partner_1_actions_total])
-    run_record_2 = np.vstack([main_2_actions_total, partner_2_actions_total])
-
     scores = [g.last_episode_score() for g in games]
     num_perfect = np.sum([1 for s in scores if s == 25])
-    return run_record_1,run_record_2, num_perfect / len(scores), scores, num_perfect, all_actors
+    return scores, num_perfect / len(scores), scores, num_perfect, all_actors
 
 def evaluate(
     agents,
@@ -226,10 +195,8 @@ def evaluate_saved_model(
     scores = []
     perfect = 0
     if record_name is not None:
-        total_record_1 = []
-        total_record_2 = []
         for i in range(num_run):
-            run_record_1, run_record_2, _, score, p, games = evaluate_and_record(
+            _, _, score, p, games = evaluate_and_record(
                 agents,
                 num_game,
                 num_game * i + seed,
@@ -240,20 +207,8 @@ def evaluate_saved_model(
                 game_name = record_name,
                 device = device,
             )
-            total_record_1.append(run_record_1)
-            total_record_2.append(run_record_2)
             scores.extend(score)
             perfect += p
-        if num_run > 1:
-            record_data_1 = np.hstack(total_record_1)
-            record_data_2 = np.hstack(total_record_2)
-        else:
-            record_data_1 = total_record_1[0]
-            record_data_2 = total_record_2[0]
-        np.save("../dataset/"+record_name+"_a.npy",record_data_1)
-        np.save("../dataset/"+record_name+"_b.npy",record_data_2)
-        print("data saved:", record_name)
-
     else:
         for i in range(num_run):
             _, _, score, p, games = evaluate(
