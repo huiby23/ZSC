@@ -8,6 +8,13 @@ parser.add_argument("--thread_num", default=10, type=int, required=False)
 
 args = parser.parse_args()
 
+
+
+
+
+
+
+#the following actions should be removed to utils
 main_1_actions = []
 partner_1_actions = []
 main_2_actions = []
