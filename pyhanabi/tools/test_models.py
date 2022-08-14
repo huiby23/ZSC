@@ -8,8 +8,24 @@ parser.add_argument("--thread_num", default=10, type=int, required=False)
 
 args = parser.parse_args()
 
+from cross_play import cross_play
+
+#generate name first
+model_name_a = ['vdn','vdn_sad_aux','vdn_sad_aux_op','iql']
+model_name_b = [1,111,1111,11111]
+
+agent_a_set = []
+agent_b_set = []
 
 
+for type_idx in range(4):
+    for seed_idx in range(1,6):
+        name = model_name_a[type_idx]+'_seed'+str(seed_idx*model_name_b[type_idx])
+        agent_a_set.append(name)
+        agent_b_set.append(name)
+
+agent_a_set_num = len(agent_a_set)
+agent_b_set_num = len(agent_b_set)
 
 
 
