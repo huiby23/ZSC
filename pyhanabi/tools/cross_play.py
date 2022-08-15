@@ -51,6 +51,38 @@ def filter_exclude(entries, excludes):
             keep.append(entry)
     return keep
 
+def get_similarities(record_name, thread_num=80):
+    main_1_actions = []
+    partner_1_actions = []
+    main_2_actions = []
+    partner_2_actions = []
+    for idx in range(thread_num):
+        full_record_name = "../templogs/"+record_name+"_"+str(idx)
+        main_1_action = np.loadtxt(full_record_name+"_1m.txt")
+        partner_1_action = np.loadtxt(full_record_name+"_1p.txt")
+        main_2_action = np.loadtxt(full_record_name+"_2m.txt")
+        partner_2_action = np.loadtxt(full_record_name+"_2p.txt")
+        main_1_actions.append(main_1_action) 
+        partner_1_actions.append(partner_1_action)
+        main_2_actions.append(main_2_action)
+        partner_2_actions.append(partner_2_action)
+            
+        os.remove(full_record_name+"_1m.txt")
+        os.remove(full_record_name+"_1p.txt")
+        os.remove(full_record_name+"_2m.txt")
+        os.remove(full_record_name+"_2p.txt")
+
+    main_1_actions_total = np.hstack(main_1_actions)
+    partner_1_actions_total = np.hstack(partner_1_actions)
+    main_2_actions_total = np.hstack(main_2_actions)
+    partner_2_actions_total = np.hstack(partner_2_actions)
+
+    a_len = main_1_actions_total.shape[0]
+    a_ratio = np.sum(main_1_actions_total == partner_1_actions_total)/a_len
+
+    b_len = main_2_actions_total.shape[0]
+    b_ratio = np.sum(main_2_actions_total == partner_2_actions_total)/b_len
+    return a_ratio, b_ratio  
 
 def cross_play(models, num_player, num_game, seed, device, record_name=None):
     if args.root is not None:
@@ -69,6 +101,7 @@ def cross_play(models, num_player, num_game, seed, device, record_name=None):
                 f"score: {np.mean(scores):.2f} "
                 f"+/- {np.std(scores) / np.sqrt(len(scores) - 1):.2f}"
             )
+    return np.mean(scores), np.std(scores)
 
 
 parser = argparse.ArgumentParser()
