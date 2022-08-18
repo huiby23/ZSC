@@ -100,6 +100,10 @@ def parse_args():
     parser.add_argument("--act_device", type=str, default="cuda:1")
     parser.add_argument("--actor_sync_freq", type=int, default=10)
 
+    #adversarial training setting
+    parser.add_argument("--adv_type", type=int, default=0)
+    parser.add_argument("--adv_ratio", type=float, default=0.0)        
+
     args = parser.parse_args()
     if args.off_belief == 1:
         args.method = "iql"
@@ -169,6 +173,8 @@ if __name__ == "__main__":
         args.boltzmann_act,
         False,  # uniform priority
         args.off_belief,
+        adv_type=args.adv_type,
+        adv_ratio=args.adv_ratio,
     )
     agent.sync_target_with_online()
 
