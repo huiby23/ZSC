@@ -197,7 +197,7 @@ if __name__ == "__main__":
     agent = agent.to(args.train_device)
     optim = torch.optim.Adam(agent.online_net.parameters(), lr=args.lr, eps=args.eps)
     print(agent)
-    eval_agent = agent.clone(args.train_device, {"vdn": False, "boltzmann_act": False})
+    eval_agent = agent.clone(args.train_device, {"vdn": False, "boltzmann_act": False, "adv_type": 0, "adv_ratio":0})
 
     replay_buffer = rela.RNNPrioritizedReplay(
         args.replay_buffer_size,

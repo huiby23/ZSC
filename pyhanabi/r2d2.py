@@ -118,6 +118,8 @@ class R2D2Agent(torch.jit.ScriptModule):
             self.uniform_priority,
             self.off_belief,
             self.greedy,
+            adv_type=overwrite.get("adv_type", self.adv_type),
+            adv_ratio=overwrite.get("adv_ratio", self.adv_ratio),
             nhead=self.nhead,
             nlayer=self.nlayer,
             max_len=self.max_len,
@@ -203,7 +205,6 @@ class R2D2Agent(torch.jit.ScriptModule):
         else:
             greedy_action, new_hid, legal_adv = self.greedy_act(priv_s, publ_s, legal_move, hid)
             reply = {}
-
             if self.greedy:
                 action = greedy_action
             else:
@@ -219,14 +220,14 @@ class R2D2Agent(torch.jit.ScriptModule):
                     subopt_adv = adv_mask * legal_adv + 1e-3
                     subopt_adv = subopt_adv * legal_move
                     subopt_action = subopt_adv.argmax(1).detach()
-                    rand = torch.rand(greedy_action.size())
+                    rand = torch.rand(greedy_action.size(), device=greedy_action.device)
                     rand = (rand < self.adv_ratio).float()
                     action = (greedy_action * (1 - rand) + subopt_action * rand).detach().long()
                 else: #use worst action
                     forbidden_act = (legal_move == 0).float()
                     worst_adv = legal_adv + 99.9*forbidden_act
                     worst_action = worst_adv.argmin(1).detach()
-                    rand = torch.rand(greedy_action.size())
+                    rand = torch.rand(greedy_action.size(), device=greedy_action.device)
                     rand = (rand < self.adv_ratio).float()
                     action = (greedy_action * (1 - rand) + worst_action * rand).detach().long()
 
