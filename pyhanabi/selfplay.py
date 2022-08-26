@@ -181,7 +181,8 @@ if __name__ == "__main__":
     if args.load_model and args.load_model != "None":
         if args.off_belief and args.belief_model != "None":
             belief_config = utils.get_train_config(args.belief_model)
-            args.load_model = belief_config["policy"]
+            if args.load_model == '1':
+                args.load_model = belief_config["policy"]
 
         print("*****loading pretrained model*****")
         print(args.load_model)
