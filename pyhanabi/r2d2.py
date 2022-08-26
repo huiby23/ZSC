@@ -223,13 +223,18 @@ class R2D2Agent(torch.jit.ScriptModule):
                     rand = torch.rand(greedy_action.size(), device=greedy_action.device)
                     rand = (rand < self.adv_ratio).float()
                     action = (greedy_action * (1 - rand) + subopt_action * rand).detach().long()
-                else: #use worst action
+                elif self.adv_type == 2: #use worst action
                     forbidden_act = (legal_move == 0).float()
                     worst_adv = legal_adv + 99.9*forbidden_act
                     worst_action = worst_adv.argmin(1).detach()
                     rand = torch.rand(greedy_action.size(), device=greedy_action.device)
                     rand = (rand < self.adv_ratio).float()
                     action = (greedy_action * (1 - rand) + worst_action * rand).detach().long()
+                else: #use random action
+                    random_action = legal_move.multinomial(1).squeeze(1)
+                    rand = torch.rand(greedy_action.size(), device=greedy_action.device)
+                    rand = (rand < self.adv_ratio).float()
+                    action = (greedy_action * (1 - rand) + random_action * rand).detach().long()                    
 
         if self.vdn:
             action = action.view(bsize, num_player)
