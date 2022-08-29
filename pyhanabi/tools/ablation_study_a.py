@@ -75,14 +75,14 @@ if args.op_type == 0:
             record_path = model_names[a_idx]+'_vs_'+model_names[b_idx]
             if not os.path.exists('../templogs/'+record_path):
                 os.makedirs('../templogs/'+record_path)
-            score = evaluate_saved_model(models, 100000, 1, 0, device=device, record_name=record_path+'/result')[0]
+            score = evaluate_saved_model(models, 100000, 1, 0, device=device, record_name=record_path+'/result')[3]
             score_lists = np.zeros(100)
-            seq_len = int(score.shape[0]/100)
+            seq_len = int(len(score)/100)
             for idx in range(99):
                 score_lists[idx] = np.mean(score[seq_len*idx:seq_len*(idx+1)])
             score_lists[99] = np.mean(score[seq_len*99:])
 
-            score_mean, score_std = np.mean(score_lists), np.std(score_lists)
+            score_mean, score_std = np.mean(score_lists), np.std(score_lists)/10
             score_mean_matrix[a_idx,b_idx] = score_mean
             score_std_matrix[a_idx,b_idx] = score_std   
 
