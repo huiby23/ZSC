@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--start", default=0, type=int)
 parser.add_argument("--end", default=99999, type=int)
 parser.add_argument("--op_type", default=0, type=int)
+parser.add_argument("--load_100", type=bool, default=False)
 
 args = parser.parse_args()
 
@@ -26,21 +27,24 @@ args = parser.parse_args()
 
 
 #args setting here
-model_name_a = ['vdn','vdn_sad_aux','vdn_sad_aux_op','iql']
-model_name_b = [1,111,1111,11111]
+model_name_a = ['iql','vdn','vdn_sad_aux','obl']
+model_name_b = [11111,1,111,11]
 device = 'cuda:0'
 agent_a_set = []
 agent_b_set = []
-exp_name = "base_4_methods_5_seeds"
+exp_name = "t1r03_vdn"
 
 
 #if a model exists both in a_set and b_set, it must be at the same location
 
 for type_idx in range(4):
-    for seed_idx in range(1,6):
+    for seed_idx in range(1,11):
         name = model_name_a[type_idx]+'_seed'+str(seed_idx*model_name_b[type_idx])
-        agent_a_set.append(name)
+        #agent_a_set.append(name)
         agent_b_set.append(name)
+
+for seed_idx in range(1,11):
+    agent_a_set.append('t1r03_seed'+str(seed_idx*1))
 
 agent_a_set_num = len(agent_a_set)
 agent_b_set_num = len(agent_b_set)
@@ -82,7 +86,10 @@ if args.op_type == 0:
                 continue
             if score_mean_matrix[a_idx,b_idx] > 0:
                 continue
-            models = ['exps/'+agent_a_set[a_idx]+'/model0.pthw', 'exps/'+agent_b_set[b_idx]+'/model0.pthw', 'exps/'+agent_b_set[b_idx]+'/model0.pthw', 'exps/'+agent_a_set[a_idx]+'/model0.pthw']
+            if args.load_100:
+                models = ['exps/'+agent_a_set[a_idx]+'/model_epoch100.pthw', 'exps/'+agent_b_set[b_idx]+'/model0.pthw', 'exps/'+agent_b_set[b_idx]+'/model0.pthw', 'exps/'+agent_a_set[a_idx]+'/model_epoch100.pthw']
+            else:
+                models = ['exps/'+agent_a_set[a_idx]+'/model0.pthw', 'exps/'+agent_b_set[b_idx]+'/model0.pthw', 'exps/'+agent_b_set[b_idx]+'/model0.pthw', 'exps/'+agent_a_set[a_idx]+'/model0.pthw']
             record_path = agent_a_set[a_idx]+'_vs_'+agent_b_set[b_idx]
             if not os.path.exists('../templogs/'+record_path):
                 os.makedirs('../templogs/'+record_path)
