@@ -28,17 +28,17 @@ color_set = ['#63b2ee','#f8cb7f','#76da91','#f89588']
 #below are 1 vs 4 codes
 #load model 
 
-score_1 = np.load('base_4_methods_10_seeds/score_mean.npy')[0:10,:]
-similarity_1 = np.load('base_4_methods_10_seeds/distance_b2a.npy')[0:10,:]
+score_1 = np.load('base_4_methods_10_seeds/score_mean.npy')[10:20,:]
+similarity_1 = np.load('base_4_methods_10_seeds/distance_b2a.npy')[10:20,:]
 
-score_2 = np.load('t2r015_iql/score_mean.npy')
-similarity_2 = np.load('t2r015_iql/distance_b2a.npy')
+score_2 = np.load('t1r03_vdn/score_mean.npy')
+similarity_2 = np.load('t1r03_vdn/distance_b2a.npy')
 
-label_set = ['IQL','IQL+SBT(B)']
+label_set = ['VDN','VDN+SBT(A)']
 score_set = [score_1,score_2]
 similarity_set = [similarity_1,similarity_2]
-fig_title = 'IQL vs IQL+SBT(B)'
-file_name = 'iql_vs_sbt_b'
+fig_title = 'VDN vs VDN+SBT(A)'
+file_name = 'vdn_vs_sbt_a'
 
 #plot and analysis
 plt.figure()
