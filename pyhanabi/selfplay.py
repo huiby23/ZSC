@@ -102,7 +102,10 @@ def parse_args():
 
     #adversarial training setting
     parser.add_argument("--adv_type", type=int, default=0)
-    parser.add_argument("--adv_ratio", type=float, default=0.0)        
+    parser.add_argument("--adv_ratio", type=float, default=0.0)   
+
+    #non-parameter sharing setting
+    parser.add_argument("--no_sharing", type=bool, default=False)     
 
     args = parser.parse_args()
     if args.off_belief == 1:
@@ -159,200 +162,186 @@ if __name__ == "__main__":
         args.max_len,
     )
 
-    agent = r2d2.R2D2Agent(
-        (args.method == "vdn"),
-        args.multi_step,
-        args.gamma,
-        args.eta,
-        args.train_device,
-        games[0].feature_size(args.sad),
-        args.rnn_hid_dim,
-        games[0].num_action(),
-        args.net,
-        args.num_lstm_layer,
-        args.boltzmann_act,
-        False,  # uniform priority
-        args.off_belief,
-        adv_type=args.adv_type,
-        adv_ratio=args.adv_ratio,
-    )
-    agent.sync_target_with_online()
+    if args.no_sharing:
+        agent = r2d2.R2D2Agent(
+            (args.method == "vdn"),
+            args.multi_step,
+            args.gamma,
+            args.eta,
+            args.train_device,
+            games[0].feature_size(args.sad),
+            args.rnn_hid_dim,
+            games[0].num_action(),
+            args.net,
+            args.num_lstm_layer,
+            args.boltzmann_act,
+            False,  # uniform priority
+            args.off_belief,
+            adv_type=args.adv_type,
+            adv_ratio=args.adv_ratio,
+        )
+        agent.sync_target_with_online()      
 
-    if args.load_model and args.load_model != "None":
-        if args.off_belief and args.belief_model != "None":
-            belief_config = utils.get_train_config(args.belief_model)
-            if args.load_model == '1':
-                args.load_model = belief_config["policy"]
+        agent_p = r2d2.R2D2Agent(
+            (args.method == "vdn"),
+            args.multi_step,
+            args.gamma,
+            args.eta,
+            args.train_device,
+            games[0].feature_size(args.sad),
+            args.rnn_hid_dim,
+            games[0].num_action(),
+            args.net,
+            args.num_lstm_layer,
+            args.boltzmann_act,
+            False,  # uniform priority
+            args.off_belief,
+            adv_type=args.adv_type,
+            adv_ratio=args.adv_ratio,
+        )
+        agent_p.sync_target_with_online()  
 
-        print("*****loading pretrained model*****")
-        print(args.load_model)
-        utils.load_weight(agent.online_net, args.load_model, args.train_device)
-        print("*****done*****")
+        agent = agent.to(args.train_device)
+        agent_p = agent_p.to(args.train_device)
+        optim = torch.optim.Adam(agent.online_net.parameters(), lr=args.lr, eps=args.eps)
+        optim_p = torch.optim.Adam(agent_p.online_net.parameters(), lr=args.lr, eps=args.eps)
+        print(agent)
+        eval_agent = agent.clone(args.train_device, {"vdn": False, "boltzmann_act": False, "adv_type": 0, "adv_ratio":0})
+        eval_agent_p = agent_p.clone(args.train_device, {"vdn": False, "boltzmann_act": False, "adv_type": 0, "adv_ratio":0})
 
-    # use clone bot for additional bc loss
-    if args.clone_bot and args.clone_bot != "None":
-        clone_bot = utils.load_supervised_agent(args.clone_bot, args.train_device)
-    else:
-        clone_bot = None
+        replay_buffer = rela.RNNPrioritizedReplay(
+            args.replay_buffer_size,
+            args.seed,
+            args.priority_exponent,
+            args.priority_weight,
+            args.prefetch,
+        )
+        replay_buffer_p = rela.RNNPrioritizedReplay(
+            args.replay_buffer_size,
+            args.seed,
+            args.priority_exponent,
+            args.priority_weight,
+            args.prefetch,
+        )
+        belief_model = None
+        
 
-    agent = agent.to(args.train_device)
-    optim = torch.optim.Adam(agent.online_net.parameters(), lr=args.lr, eps=args.eps)
-    print(agent)
-    eval_agent = agent.clone(args.train_device, {"vdn": False, "boltzmann_act": False, "adv_type": 0, "adv_ratio":0})
-
-    replay_buffer = rela.RNNPrioritizedReplay(
-        args.replay_buffer_size,
-        args.seed,
-        args.priority_exponent,
-        args.priority_weight,
-        args.prefetch,
-    )
-
-    belief_model = None
-    if args.off_belief and args.belief_model != "None":
-        print(f"load belief model from {args.belief_model}")
-        from belief_model import ARBeliefModel
-
-        belief_devices = args.belief_device.split(",")
-        belief_config = utils.get_train_config(args.belief_model)
-        belief_model = []
-        for device in belief_devices:
-            belief_model.append(
-                ARBeliefModel.load(
-                    args.belief_model,
-                    device,
-                    5,
-                    args.num_fict_sample,
-                    belief_config["fc_only"],
-                )
-            )
-
-    act_group = ActGroup(
-        args.act_device,
-        agent,
-        args.seed,
-        args.num_thread,
-        args.num_game_per_thread,
-        args.num_player,
-        explore_eps,
-        boltzmann_t,
-        args.method,
-        args.sad,
-        args.shuffle_color,
-        args.hide_action,
-        True,  # trinary, 3 bits for aux task
-        replay_buffer,
-        args.multi_step,
-        args.max_len,
-        args.gamma,
-        args.off_belief,
-        belief_model,
-    )
-
-    context, threads = create_threads(
-        args.num_thread,
-        args.num_game_per_thread,
-        act_group.actors,
-        games,
-    )
-
-    act_group.start()
-    context.start()
-    while replay_buffer.size() < args.burn_in_frames:
-        print("warming up replay buffer:", replay_buffer.size())
-        time.sleep(1)
-
-    print("Success, Done")
-    print("=======================")
-
-    frame_stat = dict()
-    frame_stat["num_acts"] = 0
-    frame_stat["num_buffer"] = 0
-
-    stat = common_utils.MultiCounter(args.save_dir)
-    tachometer = utils.Tachometer()
-    stopwatch = common_utils.Stopwatch()
-
-    for epoch in range(args.num_epoch):
-        print("beginning of epoch: ", epoch)
-        print(common_utils.get_mem_usage())
-        tachometer.start()
-        stat.reset()
-        stopwatch.reset()
-
-        for batch_idx in range(args.epoch_len):
-            num_update = batch_idx + epoch * args.epoch_len
-            if num_update % args.num_update_between_sync == 0:
-                agent.sync_target_with_online()
-            if num_update % args.actor_sync_freq == 0:
-                act_group.update_model(agent)
-
-            torch.cuda.synchronize()
-            stopwatch.time("sync and updating")
-
-            batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
-            stopwatch.time("sample data")
-
-            loss, priority, online_q = agent.loss(batch, args.aux_weight, stat)
-            if clone_bot is not None and args.clone_weight > 0:
-                bc_loss = agent.behavior_clone_loss(
-                    online_q, batch, args.clone_t, clone_bot, stat
-                )
-                loss = loss + bc_loss * args.clone_weight
-            loss = (loss * weight).mean()
-            loss.backward()
-
-            torch.cuda.synchronize()
-            stopwatch.time("forward & backward")
-
-            g_norm = torch.nn.utils.clip_grad_norm_(
-                agent.online_net.parameters(), args.grad_clip
-            )
-            optim.step()
-            optim.zero_grad()
-
-            torch.cuda.synchronize()
-            stopwatch.time("update model")
-
-            replay_buffer.update_priority(priority)
-            stopwatch.time("updating priority")
-
-            stat["loss"].feed(loss.detach().item())
-            stat["grad_norm"].feed(g_norm)
-            stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
-
-        count_factor = args.num_player if args.method == "vdn" else 1
-        print("EPOCH: %d" % epoch)
-        tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
-        stopwatch.summary()
-        stat.summary(epoch)
-
-        eval_seed = (9917 + epoch * 999999) % 7777777
-        eval_agent.load_state_dict(agent.state_dict())
-        score, perfect, *_ = evaluate(
-            [eval_agent for _ in range(args.num_player)],
-            1000,
-            eval_seed,
-            args.eval_bomb,
-            0,  # explore eps
+        act_group = ActGroup(
+            args.act_device,
+            agent,
+            args.seed,
+            args.num_thread,
+            args.num_game_per_thread,
+            args.num_player,
+            explore_eps,
+            boltzmann_t,
+            args.method,
             args.sad,
+            args.shuffle_color,
             args.hide_action,
+            True,  # trinary, 3 bits for aux task
+            replay_buffer,
+            args.multi_step,
+            args.max_len,
+            args.gamma,
+            args.off_belief,
+            belief_model,
+            agent_p,
+            replay_buffer_p,
         )
 
-        force_save_name = None
-        if epoch > 0 and epoch % 100 == 0:
-            force_save_name = "model_epoch%d" % epoch
-        model_saved = saver.save(
-            None, agent.online_net.state_dict(), score, force_save_name=force_save_name
-        )
-        print(
-            "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
-            % (epoch, score, perfect * 100, model_saved)
+        context, threads = create_threads(
+            args.num_thread,
+            args.num_game_per_thread,
+            act_group.actors,
+            games,
         )
 
-        if clone_bot is not None:
+        act_group.start_nonsharing()
+        context.start()
+        while replay_buffer.size() < args.burn_in_frames:
+            print("warming up replay buffer:", replay_buffer.size())
+            time.sleep(1)
+
+        print("Success, Done")
+        print("=======================")
+
+        frame_stat = dict()
+        frame_stat["num_acts"] = 0
+        frame_stat["num_buffer"] = 0
+
+        stat = common_utils.MultiCounter(args.save_dir)
+        tachometer = utils.Tachometer()
+        stopwatch = common_utils.Stopwatch()
+
+        for epoch in range(args.num_epoch):
+            print("beginning of epoch: ", epoch)
+            print(common_utils.get_mem_usage())
+            tachometer.start()
+            stat.reset()
+            stopwatch.reset()
+
+            for batch_idx in range(args.epoch_len):
+                num_update = batch_idx + epoch * args.epoch_len
+                if num_update % args.num_update_between_sync == 0:
+                    agent.sync_target_with_online()
+                    agent_p.sync_target_with_online()
+                if num_update % args.actor_sync_freq == 0:
+                    act_group.update_model_nonsharing(agent,agent_p)
+
+                torch.cuda.synchronize()
+                stopwatch.time("sync and updating")
+
+                batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
+                stopwatch.time("sample data")
+
+                loss, priority, online_q = agent.loss(batch, args.aux_weight, stat)
+                loss = (loss * weight).mean()
+                loss.backward()
+                
+                batch_p, weight_p = replay_buffer_p.sample(args.batchsize, args.train_device)
+                loss_p, priority_p, online_q_p = agent_p.loss(batch_p, args.aux_weight, stat)
+                loss_p = (loss_p * weight).mean()
+                loss_p.backward()
+                torch.cuda.synchronize()
+                stopwatch.time("forward & backward")
+
+                g_norm = torch.nn.utils.clip_grad_norm_(
+                    agent.online_net.parameters(), args.grad_clip
+                )
+                optim.step()
+                optim.zero_grad()
+                g_norm_p = torch.nn.utils.clip_grad_norm_(
+                    agent_p.online_net.parameters(), args.grad_clip
+                )
+                optim_p.step()
+                optim_p.zero_grad()
+
+                torch.cuda.synchronize()
+                stopwatch.time("update model")
+
+                replay_buffer.update_priority(priority)
+                replay_buffer_p.update_priority(priority_p)
+                stopwatch.time("updating priority")
+
+                stat["loss"].feed(loss.detach().item())
+                stat["grad_norm"].feed(g_norm)
+                stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
+                stat["loss_p"].feed(loss_p.detach().item())
+                stat["grad_norm_p"].feed(g_norm_p)
+                stat["boltzmann_t_p"].feed(batch_p.obs["temperature"][0].mean())
+
+            count_factor = args.num_player if args.method == "vdn" else 1
+            print("EPOCH: %d" % epoch)
+            tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
+            stopwatch.summary()
+            stat.summary(epoch)
+
+            eval_seed = (9917 + epoch * 999999) % 7777777
+            eval_agent.load_state_dict(agent.state_dict())
+            eval_agent_p.load_state_dict(agent_p.state_dict())
             score, perfect, *_ = evaluate(
-                [clone_bot] + [eval_agent for _ in range(args.num_player - 1)],
+                [eval_agent, eval_agent_p],
                 1000,
                 eval_seed,
                 args.eval_bomb,
@@ -360,13 +349,230 @@ if __name__ == "__main__":
                 args.sad,
                 args.hide_action,
             )
-            print(f"clone bot score: {np.mean(score)}")
 
-        if args.off_belief:
-            actors = common_utils.flatten(act_group.actors)
-            success_fict = [actor.get_success_fict_rate() for actor in actors]
-            print(
-                "epoch %d, success rate for sampling ficticious state: %.2f%%"
-                % (epoch, 100 * np.mean(success_fict))
+            force_save_name = None
+            if epoch > 0 and epoch % 100 == 0:
+                force_save_name = "model_epoch%d" % epoch
+            model_saved = saver.save(
+                None, agent.online_net.state_dict(), score, False, force_save_name, agent_p.online_net.state_dict()
             )
-        print("==========")
+            print(
+                "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
+                % (epoch, score, perfect * 100, model_saved)
+            )
+
+            print("==========")
+
+    else:
+
+        agent = r2d2.R2D2Agent(
+            (args.method == "vdn"),
+            args.multi_step,
+            args.gamma,
+            args.eta,
+            args.train_device,
+            games[0].feature_size(args.sad),
+            args.rnn_hid_dim,
+            games[0].num_action(),
+            args.net,
+            args.num_lstm_layer,
+            args.boltzmann_act,
+            False,  # uniform priority
+            args.off_belief,
+            adv_type=args.adv_type,
+            adv_ratio=args.adv_ratio,
+        )
+        agent.sync_target_with_online()      
+
+        if args.load_model and args.load_model != "None":
+            if args.off_belief and args.belief_model != "None":
+                belief_config = utils.get_train_config(args.belief_model)
+                if args.load_model == '1':
+                    args.load_model = belief_config["policy"]
+
+            print("*****loading pretrained model*****")
+            print(args.load_model)
+            utils.load_weight(agent.online_net, args.load_model, args.train_device)
+            print("*****done*****")
+
+        # use clone bot for additional bc loss
+        if args.clone_bot and args.clone_bot != "None":
+            clone_bot = utils.load_supervised_agent(args.clone_bot, args.train_device)
+        else:
+            clone_bot = None
+
+        agent = agent.to(args.train_device)
+        optim = torch.optim.Adam(agent.online_net.parameters(), lr=args.lr, eps=args.eps)
+        print(agent)
+        eval_agent = agent.clone(args.train_device, {"vdn": False, "boltzmann_act": False, "adv_type": 0, "adv_ratio":0})
+
+        replay_buffer = rela.RNNPrioritizedReplay(
+            args.replay_buffer_size,
+            args.seed,
+            args.priority_exponent,
+            args.priority_weight,
+            args.prefetch,
+        )
+
+        belief_model = None
+        if args.off_belief and args.belief_model != "None":
+            print(f"load belief model from {args.belief_model}")
+            from belief_model import ARBeliefModel
+
+            belief_devices = args.belief_device.split(",")
+            belief_config = utils.get_train_config(args.belief_model)
+            belief_model = []
+            for device in belief_devices:
+                belief_model.append(
+                    ARBeliefModel.load(
+                        args.belief_model,
+                        device,
+                        5,
+                        args.num_fict_sample,
+                        belief_config["fc_only"],
+                    )
+                )
+
+        act_group = ActGroup(
+            args.act_device,
+            agent,
+            args.seed,
+            args.num_thread,
+            args.num_game_per_thread,
+            args.num_player,
+            explore_eps,
+            boltzmann_t,
+            args.method,
+            args.sad,
+            args.shuffle_color,
+            args.hide_action,
+            True,  # trinary, 3 bits for aux task
+            replay_buffer,
+            args.multi_step,
+            args.max_len,
+            args.gamma,
+            args.off_belief,
+            belief_model,
+        )
+
+        context, threads = create_threads(
+            args.num_thread,
+            args.num_game_per_thread,
+            act_group.actors,
+            games,
+        )
+
+        act_group.start()
+        context.start()
+        while replay_buffer.size() < args.burn_in_frames:
+            print("warming up replay buffer:", replay_buffer.size())
+            time.sleep(1)
+
+        print("Success, Done")
+        print("=======================")
+
+        frame_stat = dict()
+        frame_stat["num_acts"] = 0
+        frame_stat["num_buffer"] = 0
+
+        stat = common_utils.MultiCounter(args.save_dir)
+        tachometer = utils.Tachometer()
+        stopwatch = common_utils.Stopwatch()
+
+        for epoch in range(args.num_epoch):
+            print("beginning of epoch: ", epoch)
+            print(common_utils.get_mem_usage())
+            tachometer.start()
+            stat.reset()
+            stopwatch.reset()
+
+            for batch_idx in range(args.epoch_len):
+                num_update = batch_idx + epoch * args.epoch_len
+                if num_update % args.num_update_between_sync == 0:
+                    agent.sync_target_with_online()
+                if num_update % args.actor_sync_freq == 0:
+                    act_group.update_model(agent)
+
+                torch.cuda.synchronize()
+                stopwatch.time("sync and updating")
+
+                batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
+                stopwatch.time("sample data")
+
+                loss, priority, online_q = agent.loss(batch, args.aux_weight, stat)
+                if clone_bot is not None and args.clone_weight > 0:
+                    bc_loss = agent.behavior_clone_loss(
+                        online_q, batch, args.clone_t, clone_bot, stat
+                    )
+                    loss = loss + bc_loss * args.clone_weight
+                loss = (loss * weight).mean()
+                loss.backward()
+
+                torch.cuda.synchronize()
+                stopwatch.time("forward & backward")
+
+                g_norm = torch.nn.utils.clip_grad_norm_(
+                    agent.online_net.parameters(), args.grad_clip
+                )
+                optim.step()
+                optim.zero_grad()
+
+                torch.cuda.synchronize()
+                stopwatch.time("update model")
+
+                replay_buffer.update_priority(priority)
+                stopwatch.time("updating priority")
+
+                stat["loss"].feed(loss.detach().item())
+                stat["grad_norm"].feed(g_norm)
+                stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
+
+            count_factor = args.num_player if args.method == "vdn" else 1
+            print("EPOCH: %d" % epoch)
+            tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
+            stopwatch.summary()
+            stat.summary(epoch)
+
+            eval_seed = (9917 + epoch * 999999) % 7777777
+            eval_agent.load_state_dict(agent.state_dict())
+            score, perfect, *_ = evaluate(
+                [eval_agent for _ in range(args.num_player)],
+                1000,
+                eval_seed,
+                args.eval_bomb,
+                0,  # explore eps
+                args.sad,
+                args.hide_action,
+            )
+
+            force_save_name = None
+            if epoch > 0 and epoch % 100 == 0:
+                force_save_name = "model_epoch%d" % epoch
+            model_saved = saver.save(
+                None, agent.online_net.state_dict(), score, force_save_name=force_save_name
+            )
+            print(
+                "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
+                % (epoch, score, perfect * 100, model_saved)
+            )
+
+            if clone_bot is not None:
+                score, perfect, *_ = evaluate(
+                    [clone_bot] + [eval_agent for _ in range(args.num_player - 1)],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                )
+                print(f"clone bot score: {np.mean(score)}")
+
+            if args.off_belief:
+                actors = common_utils.flatten(act_group.actors)
+                success_fict = [actor.get_success_fict_rate() for actor in actors]
+                print(
+                    "epoch %d, success rate for sampling ficticious state: %.2f%%"
+                    % (epoch, 100 * np.mean(success_fict))
+                )
+            print("==========")
