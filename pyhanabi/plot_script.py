@@ -19,26 +19,28 @@ def pearson_coef(x,y):
     X = np.vstack([x,y])
     return np.corrcoef(X)[0][1]
 
-color_set = ['#63b2ee','#f8cb7f','#76da91','#f89588']
+#color_set = ['#63b2ee','#f8cb7f','#76da91','#f89588']
 
-
-
-
+color_set = ['#f8cb7f','#76da91','#63b2ee']
 
 #below are 1 vs 4 codes
 #load model 
 
-score_1 = np.load('base_4_methods_10_seeds/score_mean.npy')[10:20,:]
-similarity_1 = np.load('base_4_methods_10_seeds/distance_b2a.npy')[10:20,:]
+#firstly, generate IQL models
+score_1 = np.load('base_4_methods_10_seeds/score_mean.npy')[20:30,:]
+similarity_1 = np.load('base_4_methods_10_seeds/distance_b2a.npy')[20:30,:]
 
-score_2 = np.load('t1r03_vdn/score_mean.npy')
-similarity_2 = np.load('t1r03_vdn/distance_b2a.npy')
+score_2 = np.load('sad_op/score_mean.npy')
+similarity_2 = np.load('sad_op/distance_b2a.npy')
 
-label_set = ['VDN','VDN+SBT(A)']
-score_set = [score_1,score_2]
-similarity_set = [similarity_1,similarity_2]
-fig_title = 'VDN vs VDN+SBT(A)'
-file_name = 'vdn_vs_sbt_a'
+score_3 = np.load('t3r02_sad/score_mean.npy')
+similarity_3 = np.load('t3r02_sad/distance_b2a.npy')
+
+label_set = ['SAD','SAD+OP','SAD+SBRT']
+score_set = [score_1,score_2,score_3]
+similarity_set = [similarity_1,similarity_2,similarity_3]
+fig_title = 'SAD vs SAD+OP vs SAD+SBRT'
+file_name = 'sad_result'
 
 #plot and analysis
 plt.figure()
@@ -46,20 +48,20 @@ for idx in range(len(label_set)):
     x_data, y_data = similarity_set[idx].flatten(), score_set[idx].flatten()
     y_data = np.delete(y_data,x_data>0.95)
     x_data = np.delete(x_data,x_data>0.95)
-    plt.scatter(x_data, y_data, c=color_set[idx], alpha=0.7, label=label_set[idx])
+    plt.scatter(x_data, y_data, c=color_set[idx], alpha=0.6, label=label_set[idx])
     k,b = np.polyfit(x_data,y_data,1)
     x = np.linspace(0,1,50)
     y = k*x + b
     print('label:',label_set[idx],' k:',k,' b:',b, ' person coef:',pearson_coef(x_data, y_data))
-    plt.plot(x,y,c=color_set[idx])
+    plt.plot(x,y,c=color_set[idx],lw=2)
 plt.title(fig_title,fontsize=22)    
 
 
 
 plt.xlim(0, 1)
 plt.ylim(0, 25)
-plt.ylabel('performance', fontsize=18)
-plt.xlabel('similarity', fontsize=18)
+plt.ylabel('Cross-Play Scores', fontsize=18)
+plt.xlabel('Conditional Policy Similarity', fontsize=18)
 plt.legend(fontsize=14, loc='lower right')
 plt.savefig('figs/'+file_name+'.pdf', bbox_inches='tight')
 

@@ -201,6 +201,15 @@ if __name__ == "__main__":
         )
         agent_p.sync_target_with_online()  
 
+
+        if args.load_model and args.load_model != "None":
+
+            print("*****loading pretrained model*****")
+            print(args.load_model)
+            utils.load_weight(agent.online_net, (args.load_model+'model0.pthw'), args.train_device)
+            utils.load_weight(agent_p.online_net, (args.load_model+'p_model0.pthw'), args.train_device)
+            print("*****done*****")
+
         agent = agent.to(args.train_device)
         agent_p = agent_p.to(args.train_device)
         optim = torch.optim.Adam(agent.online_net.parameters(), lr=args.lr, eps=args.eps)

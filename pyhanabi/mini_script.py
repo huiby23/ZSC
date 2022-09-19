@@ -17,77 +17,33 @@ def pearson_coef(x,y):
 
 #A comprehensive analysis of base test 
 
-scores = np.load('base_4_methods_10_seeds/score_mean.npy')
-similarity = np.load('base_4_methods_10_seeds/distance_b2a.npy')
-model_type = ['IQL','VDN','SAD','OBL']
+base_scores = np.load('base_4_methods_10_seeds/score_mean.npy')
+base_similarity = np.load('base_4_methods_10_seeds/distance_b2a.npy')
 
+#Firstly, vdn
+vdn_intra_scores = base_scores[10:20,10:20].flatten()
+vdn_intra_sim = base_similarity[10:20,10:20].flatten()
+vdn_intra_scores = np.delete(vdn_intra_scores,vdn_intra_sim>0.95)
+vdn_inter_scores = np.hstack([base_scores[10:20,0:10],base_scores[10:20,20:]]).flatten()
 
-person_mat = np.zeros((4,5))
-similarity_mat_mean = np.zeros((4,5))
-similarity_mat_ste = np.zeros((4,5))
-cross_play_mat_mean = np.zeros((4,5))
-cross_play_mat_ste = np.zeros((4,5))
+vdn_op_intra_scores = np.load('vdn_op_intraplay/score_mean.npy').flatten()
+vdn_op_intra_sim = np.load('vdn_op_intraplay/distance_b2a.npy').flatten()
+vdn_op_intra_scores = np.delete(vdn_op_intra_scores, vdn_op_intra_sim>0.95)
+total_cp_scores = np.load('vdn_op/score_mean.npy')
+vdn_op_inter_scores = np.hstack([total_cp_scores[:,0:10],total_cp_scores[:,20:]]) .flatten()
 
+vdn_sbrt_intra_scores = np.load('t3r02_vdn_interplay/score_mean.npy').flatten()
+vdn_sbrt_intra_sim = np.load('t3r02_vdn_interplay/distance_b2a.npy').flatten()
+vdn_sbrt_intra_scores = np.delete(vdn_sbrt_intra_scores, vdn_sbrt_intra_sim>0.95)
+total_cp_scores = np.load('t3r02_vdn/score_mean.npy')
+vdn_sbrt_inter_scores = np.hstack([total_cp_scores[:,0:10],total_cp_scores[:,20:]]).flatten()
 
-
-for x_idx in range(4):
-    for y_idx in range(4):
-        mini_scores = scores[x_idx*10:(x_idx+1)*10, y_idx*10:(y_idx+1)*10].flatten()
-        mini_similarity = similarity[x_idx*10:(x_idx+1)*10, y_idx*10:(y_idx+1)*10].flatten()
-
-        mini_scores = np.delete(mini_scores,mini_similarity>0.95)
-        mini_similarity = np.delete(mini_similarity,mini_similarity>0.95) 
-
-        person_mat[x_idx,y_idx] = pearson_coef(mini_scores, mini_similarity)
-        similarity_mat_mean[x_idx,y_idx] = np.mean(mini_similarity)
-        similarity_mat_ste[x_idx,y_idx] = np.std(mini_similarity)/np.sqrt(mini_similarity.shape[0])
-        cross_play_mat_mean[x_idx,y_idx] = np.mean(mini_scores)
-        cross_play_mat_ste[x_idx,y_idx] = np.std(mini_scores)/np.sqrt(mini_scores.shape[0])
-
-    mid_scores = scores[x_idx*10:(x_idx+1)*10, :].flatten()
-    mid_similarity = similarity[x_idx*10:(x_idx+1)*10, :].flatten()
-    mid_scores = np.delete(mid_scores,mid_similarity>0.95)
-    mid_similarity = np.delete(mid_similarity,mid_similarity>0.95) 
-
-    person_mat[x_idx,4] = pearson_coef(mid_scores, mid_similarity)
-    similarity_mat_mean[x_idx,4] = np.mean(mid_similarity)
-    similarity_mat_ste[x_idx,4] = np.std(mid_similarity)/np.sqrt(mid_similarity.shape[0])
-    cross_play_mat_mean[x_idx,4] = np.mean(mid_scores)
-    cross_play_mat_ste[x_idx,4] = np.std(mid_scores)/np.sqrt(mid_scores.shape[0])
-
-print('person_mat:',person_mat)
-print('similarity_mat_mean:',similarity_mat_mean)
-print('similarity_mat_ste:',similarity_mat_ste)
-print('cross_play_mat_mean:',cross_play_mat_mean)
-print('cross_play_mat_ste:',cross_play_mat_ste)
+print('vdn intra scores,', '%.2f'%(vdn_intra_scores.mean()),"+",'%.2f'%(vdn_intra_scores.std()/np.sqrt(0.5*vdn_intra_scores.shape[0])))
+print('vdn inter scores,', '%.2f'%(vdn_inter_scores.mean()),"+",'%.2f'%(vdn_inter_scores.std()/np.sqrt(0.5*vdn_inter_scores.shape[0])))
+print('vdn-op intra scores,', '%.2f'%(vdn_op_intra_scores.mean()),"+",'%.2f'%(vdn_op_intra_scores.std()/np.sqrt(0.5*vdn_op_intra_scores.shape[0])))
+print('vdn-op inter scores,', '%.2f'%(vdn_op_inter_scores.mean()),"+",'%.2f'%(vdn_op_inter_scores.std()/np.sqrt(0.5*vdn_op_inter_scores.shape[0])))
+print('vdn-sbrt intra scores,', '%.2f'%(vdn_sbrt_intra_scores.mean()),"+",'%.2f'%(vdn_sbrt_intra_scores.std()/np.sqrt(0.5*vdn_sbrt_intra_scores.shape[0])))
+print('vdn-sbrt inter scores,', '%.2f'%(vdn_sbrt_inter_scores.mean()),"+",'%.2f'%(vdn_sbrt_inter_scores.std()/np.sqrt(0.5*vdn_sbrt_inter_scores.shape[0])))
 
 
 
-
-
-
-
-
-'''
-#get intra-play scores
-self_play_records = ['sad_op_selfplay','t3r02_op_selfplay']
-for record in self_play_records:
-    score_data = np.load(record+'/score_mean.npy').flatten()
-    slr_data = np.load(record+'/distance_b2a.npy').flatten()
-    print('data:', record)
-    final_data = np.delete(score_data,slr_data>0.95)
-    print(final_data.mean())
-
-#get inter-play scores
-
-aaa = np.load('t3r02_op/score_mean.npy')
-print('sad+op+sbrt,',np.hstack([aaa[:,0:20],aaa[:,30:]]).mean())
-bbb = np.load('sad_op/score_mean.npy')
-print('sad+op,',np.hstack([bbb[:,0:20],bbb[:,30:]]).mean())
-ccc = np.load('t3r02_sad/score_mean.npy')
-print('sad+sbrt,',np.hstack([ccc[:,0:20],ccc[:,30:]]).mean())
-ddd = np.load('t3r02_vdn/score_mean.npy')
-print('vdn+sbrt,',np.hstack([ddd[:,0:10],ddd[:,20:]]).mean())
-eee = np.load('t3r02_iql/score_mean.npy')
-print('iql+sbrt,',eee[:,10:].mean())
-'''
