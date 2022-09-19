@@ -40,15 +40,16 @@ class HanabiThreadLoop : public rela::ThreadLoop {
 
   virtual void mainLoop() override {
     if(record_){
-      std::string agent_1_main_logname = "../templogs/"+ recordName_ + "_1m.txt";
-      std::string agent_2_main_logname = "../templogs/"+ recordName_ + "_2m.txt";
-      std::string agent_1_partner_logname = "../templogs/"+ recordName_ + "_1p.txt";
-      std::string agent_2_partner_logname = "../templogs/"+ recordName_ + "_2p.txt";
+      std::string log_name = "records/"+ recordName_ + ".txt";
+      //std::string agent_2_main_logname = "records/"+ recordName_ + "_2m.txt";
+      //std::string agent_1_partner_logname = "records/"+ recordName_ + "_1p.txt";
+      //std::string agent_2_partner_logname = "records/"+ recordName_ + "_2p.txt";
 
-      FILE* file_1_main = fopen(agent_1_main_logname.data(),"a");
-      FILE* file_2_main = fopen(agent_2_main_logname.data(),"a");
-      FILE* file_1_partner = fopen(agent_1_partner_logname.data(),"a");
-      FILE* file_2_partner = fopen(agent_2_partner_logname.data(),"a");
+      int agent_1_sim = 0;
+      int agent_1_diff = 0;
+      int agent_2_sim = 0;
+      int agent_2_diff = 0;
+
       while (!terminated()) {
         // go over each envs in sequential order
         // call in seperate for-loops to maximize parallization
@@ -96,13 +97,20 @@ class HanabiThreadLoop : public rela::ThreadLoop {
           int partner_2_act = actors[3]->beforeAct(curPlayer);
 
           if (main_1_act != -1){
-            fprintf(file_1_main, "%d\n", main_1_act);
-            fprintf(file_1_partner, "%d\n", partner_1_act);
+            if (main_1_act == partner_1_act){
+              agent_1_sim += 1;
+            } else {
+              agent_1_diff +=1;
+            }
           }
-          
+            //fprintf(file_1_main, "%d\n", main_1_act);
+            //fprintf(file_1_partner, "%d\n", partner_1_act);
           if (main_2_act != -1){
-            fprintf(file_2_main, "%d\n", main_2_act);
-            fprintf(file_2_partner, "%d\n", partner_2_act);
+            if (main_2_act == partner_2_act){
+              agent_2_sim += 1;
+            } else {
+              agent_2_diff +=1;
+            }
           }
 
         }
@@ -129,10 +137,15 @@ class HanabiThreadLoop : public rela::ThreadLoop {
           }
         }
       }
-      fclose(file_1_main);
-      fclose(file_1_partner);
-      fclose(file_2_main);
-      fclose(file_2_partner);      
+
+      FILE* record_file = fopen(log_name.data(),"a");
+
+      fprintf(record_file, "%d\n", agent_1_sim);
+      fprintf(record_file, "%d\n", agent_1_diff);
+      fprintf(record_file, "%d\n", agent_2_sim);
+      fprintf(record_file, "%d\n", agent_2_diff);
+
+      fclose(record_file);      
     } else {
       while (!terminated()) {
         // go over each envs in sequential order
