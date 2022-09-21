@@ -126,7 +126,7 @@ PYBIND11_MODULE(hanalearn, m) {
       .def(py::init<
            std::vector<std::shared_ptr<HanabiEnv>>,
            std::vector<std::vector<std::shared_ptr<R2D2Actor>>>,
-           bool,
+           int,
            bool,
            std::string>());
 

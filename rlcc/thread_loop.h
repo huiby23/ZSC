@@ -19,7 +19,7 @@ class HanabiThreadLoop : public rela::ThreadLoop {
       , actors_(std::move(actors))
       , done_(envs_.size(), -1)
       , eval_(eval)
-      , record_(false)
+      , record_(0)
       , recordName_("zero"){
     assert(envs_.size() == actors_.size());
   }
@@ -39,7 +39,7 @@ class HanabiThreadLoop : public rela::ThreadLoop {
   }
 
   virtual void mainLoop() override {
-    if(record_){
+    if(record_==1){
       std::string log_name = "records/"+ recordName_ + ".txt";
       //std::string agent_2_main_logname = "records/"+ recordName_ + "_2m.txt";
       //std::string agent_1_partner_logname = "records/"+ recordName_ + "_1p.txt";
@@ -67,6 +67,11 @@ class HanabiThreadLoop : public rela::ThreadLoop {
               if (done_[i] == 1) {
                 numDone_ += 1;
                 if (numDone_ == (int)envs_.size()) {
+                  fprintf(record_file, "%d\n", agent_1_sim);
+                  fprintf(record_file, "%d\n", agent_1_diff);
+                  fprintf(record_file, "%d\n", agent_2_sim);
+                  fprintf(record_file, "%d\n", agent_2_diff);
+                  fclose(record_file); 
                   return;
                 }
               }
@@ -136,16 +141,97 @@ class HanabiThreadLoop : public rela::ThreadLoop {
             actors[j]->observeAfterAct(*envs_[i]);
           }
         }
+      }   
+    } else if(record==2){
+      std::string log_name = "records/"+ recordName_ + ".txt";
+
+      int agent_sim = 0;
+      int agent_diff = 0;
+
+      while (!terminated()) {
+        // go over each envs in sequential order
+        // call in seperate for-loops to maximize parallization
+        for (size_t i = 0; i < envs_.size(); ++i) {
+          if (done_[i] == 1) {
+            continue;
+          }
+
+          auto& actors = actors_[i];
+
+          if (envs_[i]->terminated()) {
+            // we only run 1 game for evaluation
+            if (eval_) {
+              ++done_[i];
+              if (done_[i] == 1) {
+                numDone_ += 1;
+                if (numDone_ == (int)envs_.size()) {
+                  FILE* record_file = fopen(log_name.data(),"a");
+                  fprintf(record_file, "%d\n", agent_sim);
+                  fprintf(record_file, "%d\n", agent_diff);
+                  fclose(record_file);      
+                  return;
+                }
+              }
+            }
+
+            envs_[i]->reset();
+            for (size_t j = 0; j < actors.size(); ++j) {
+              actors[j]->reset(*envs_[i]);
+            }
+          }
+
+          for (size_t j = 0; j < actors.size(); ++j) {
+            actors[j]->observeBeforeAct(*envs_[i]);
+          }
+        }
+
+        for (size_t i = 0; i < envs_.size(); ++i) {
+          if (done_[i] == 1) {
+            continue;
+          }
+
+          auto& actors = actors_[i];
+          int curPlayer = envs_[i]->getCurrentPlayer();
+
+          int main_1_act = actors[0]->recordAct(*envs_[i], curPlayer);
+          int main_2_act = actors[1]->recordAct(*envs_[i], curPlayer);
+          int main_3_act = actors[2]->recordAct(*envs_[i], curPlayer);
+          int partner_act = actors[3]->beforeAct(curPlayer);
+
+          if (main_3_act != -1){
+            if (main_3_act == partner_act){
+              agent_sim += 1;
+            } else {
+              agent_diff +=1;
+            }
+          }
+
+        }
+
+        for (size_t i = 0; i < envs_.size(); ++i) {
+          if (done_[i] == 1) {
+            continue;
+          }
+
+          auto& actors = actors_[i];
+          for (size_t j = 0; j < actors.size(); ++j) {
+            actors[j]->fictAct(*envs_[i]);
+          }
+        }
+
+        for (size_t i = 0; i < envs_.size(); ++i) {
+          if (done_[i] == 1) {
+            continue;
+          }
+
+          auto& actors = actors_[i];
+          for (size_t j = 0; j < actors.size(); ++j) {
+            actors[j]->observeAfterAct(*envs_[i]);
+          }
+        }
       }
 
-      FILE* record_file = fopen(log_name.data(),"a");
 
-      fprintf(record_file, "%d\n", agent_1_sim);
-      fprintf(record_file, "%d\n", agent_1_diff);
-      fprintf(record_file, "%d\n", agent_2_sim);
-      fprintf(record_file, "%d\n", agent_2_diff);
-
-      fclose(record_file);      
     } else {
       while (!terminated()) {
         // go over each envs in sequential order
@@ -224,7 +310,7 @@ class HanabiThreadLoop : public rela::ThreadLoop {
   std::vector<std::vector<std::shared_ptr<R2D2Actor>>> actors_;
   std::vector<int8_t> done_;
   const bool eval_;
-  const bool record_;
+  const int record_;
   std::string recordName_;
   int numDone_ = 0;
 };
