@@ -112,16 +112,14 @@ def evaluate_and_record_three(
     """
     if num_game < num_thread:
         num_thread = num_game
-    assert len(agents) == 2
+    assert len(agents) == 4
 
     num_player = 3
     if not isinstance(hide_action, list):
         hide_action = [hide_action for _ in range(num_player)]
     if not isinstance(sad, list):
         sad = [sad for _ in range(num_player)]
-    total_agents =[agents[0],agents[0],agents[1],agents[0]]
-    runners = [rela.BatchRunner(agent, device, 1000, ["act"]) for agent in total_agents]
-
+    runners = [rela.BatchRunner(agent, device, 1000, ["act"]) for agent in agents]
     context = rela.Context()
     games = create_envs(num_game, seed, num_player, bomb, max_len)
     threads = []
@@ -136,9 +134,9 @@ def evaluate_and_record_three(
         for g_idx in range(t_idx * game_per_thread, (t_idx + 1) * game_per_thread):
             
             actor_a = hanalearn.R2D2Actor(runners[0], 3, 0, False, sad[0], hide_action[0])
-            actor_b = hanalearn.R2D2Actor(runners[1], 3, 1, False, sad[1], hide_action[1])
-            actor_c = hanalearn.R2D2Actor(runners[2], 3, 2, False, sad[2], hide_action[2])
-            actor_d = hanalearn.R2D2Actor(runners[3], 3, 2, False, sad[2], hide_action[2], True)
+            actor_b = hanalearn.R2D2Actor(runners[1], 3, 1, False, sad[0], hide_action[0])
+            actor_c = hanalearn.R2D2Actor(runners[2], 3, 2, False, sad[1], hide_action[1])
+            actor_d = hanalearn.R2D2Actor(runners[3], 3, 2, False, sad[0], hide_action[0], True)
 
             actors = [actor_a,actor_b,actor_c,actor_d]
             thread_actors.append(actors)

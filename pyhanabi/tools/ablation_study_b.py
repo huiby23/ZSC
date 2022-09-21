@@ -46,9 +46,7 @@ sim_matrix = np.zeros((10,10))
 
 for a_idx in range(10):
     for b_idx in range(10):
-        if a_idx == b_idx:
-            continue
-        models = ['exps/'+model_names_a[a_idx]+'/model0.pthw', 'exps/'+model_names_b[b_idx]+'/model0.pthw']
+        models = ['exps/'+model_names_a[a_idx]+'/model0.pthw','exps/'+model_names_a[a_idx]+'/model0.pthw', 'exps/'+model_names_b[b_idx]+'/model0.pthw','exps/'+model_names_a[a_idx]+'/model0.pthw']
         record_path = model_names_a[a_idx]+'_vs_'+model_names_b[b_idx]
         if not os.path.exists('records/'+record_path):
             os.makedirs('records/'+record_path)
@@ -64,8 +62,6 @@ print('score mean: ', score_matrix)
 
 for a_idx in range(10):
     for b_idx in range(10):
-        if a_idx == b_idx:
-            continue
         record_name = model_names_a[a_idx]+'_vs_'+model_names_b[b_idx]+'/result'
         ratio_set = get_similarities_special(record_name, 10)
         sim_matrix[a_idx,b_idx] = np.mean(ratio_set)
@@ -86,8 +82,9 @@ file_name = 'three_agents'
 plt.figure()
 
 x_data, y_data = similarity.flatten(), score.flatten()
-x_data = np.delete(x_data,y_data==0)
-y_data = np.delete(y_data,y_data==0)
+y_data = np.delete(x_data,x_data>0.9)
+x_data = np.delete(x_data,x_data>0.9)
+
 
 plt.scatter(x_data, y_data, c='#f89588', alpha=0.6)
 k,b = np.polyfit(x_data,y_data,1)

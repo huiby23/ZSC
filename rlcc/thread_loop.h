@@ -67,6 +67,7 @@ class HanabiThreadLoop : public rela::ThreadLoop {
               if (done_[i] == 1) {
                 numDone_ += 1;
                 if (numDone_ == (int)envs_.size()) {
+                  FILE* record_file = fopen(log_name.data(),"a");
                   fprintf(record_file, "%d\n", agent_1_sim);
                   fprintf(record_file, "%d\n", agent_1_diff);
                   fprintf(record_file, "%d\n", agent_2_sim);
@@ -142,7 +143,7 @@ class HanabiThreadLoop : public rela::ThreadLoop {
           }
         }
       }   
-    } else if(record==2){
+    } else if(record_==2){
       std::string log_name = "records/"+ recordName_ + ".txt";
 
       int agent_sim = 0;
@@ -193,8 +194,8 @@ class HanabiThreadLoop : public rela::ThreadLoop {
           auto& actors = actors_[i];
           int curPlayer = envs_[i]->getCurrentPlayer();
 
-          int main_1_act = actors[0]->recordAct(*envs_[i], curPlayer);
-          int main_2_act = actors[1]->recordAct(*envs_[i], curPlayer);
+          actors[0]->act(*envs_[i], curPlayer);
+          actors[1]->act(*envs_[i], curPlayer);
           int main_3_act = actors[2]->recordAct(*envs_[i], curPlayer);
           int partner_act = actors[3]->beforeAct(curPlayer);
 
