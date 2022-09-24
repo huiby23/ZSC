@@ -27,7 +27,7 @@ class HanabiThreadLoop : public rela::ThreadLoop {
       std::vector<std::shared_ptr<HanabiEnv>> envs,
       std::vector<std::vector<std::shared_ptr<R2D2Actor>>> actors,
       bool eval,
-      bool record,
+      int record,
       std::string recordName)
       : envs_(std::move(envs))
       , actors_(std::move(actors))
