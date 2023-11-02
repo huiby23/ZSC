@@ -112,7 +112,7 @@ def evaluate_and_record_three(
     """
     if num_game < num_thread:
         num_thread = num_game
-    assert len(agents) == 4
+    assert len(agents) == 5
 
     num_player = 3
     if not isinstance(hide_action, list):
@@ -135,10 +135,11 @@ def evaluate_and_record_three(
             
             actor_a = hanalearn.R2D2Actor(runners[0], 3, 0, False, sad[0], hide_action[0])
             actor_b = hanalearn.R2D2Actor(runners[1], 3, 1, False, sad[0], hide_action[0])
-            actor_c = hanalearn.R2D2Actor(runners[2], 3, 2, False, sad[1], hide_action[1])
-            actor_d = hanalearn.R2D2Actor(runners[3], 3, 2, False, sad[0], hide_action[0], True)
+            actor_b_ref = hanalearn.R2D2Actor(runners[2], 3, 1, False, sad[0], hide_action[0], True)
+            actor_c = hanalearn.R2D2Actor(runners[3], 3, 2, False, sad[1], hide_action[1])
+            actor_c_ref = hanalearn.R2D2Actor(runners[4], 3, 2, False, sad[0], hide_action[0], True)
 
-            actors = [actor_a,actor_b,actor_c,actor_d]
+            actors = [actor_a,actor_b,actor_b_ref, actor_c,actor_c_ref]
             thread_actors.append(actors)
             thread_games.append(games[g_idx])
         record_name = game_name + "_" + str(t_idx)
