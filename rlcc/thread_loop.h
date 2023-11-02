@@ -144,10 +144,13 @@ class HanabiThreadLoop : public rela::ThreadLoop {
         }
       }   
     } else if(record_==2){
-      std::string log_name = "records/"+ recordName_ + ".txt";
+      std::string log_name_1 = "records/"+ recordName_ + "_part1.txt";
+      std::string log_name_2 = "records/"+ recordName_ + "_part2.txt";
 
-      int agent_sim = 0;
-      int agent_diff = 0;
+      int agent_sim_1 = 0;
+      int agent_diff_1 = 0;
+      int agent_sim_2 = 0;
+      int agent_diff_2 = 0;
 
       while (!terminated()) {
         // go over each envs in sequential order
@@ -166,10 +169,14 @@ class HanabiThreadLoop : public rela::ThreadLoop {
               if (done_[i] == 1) {
                 numDone_ += 1;
                 if (numDone_ == (int)envs_.size()) {
-                  FILE* record_file = fopen(log_name.data(),"a");
-                  fprintf(record_file, "%d\n", agent_sim);
-                  fprintf(record_file, "%d\n", agent_diff);
-                  fclose(record_file);      
+                  FILE* record_file_1 = fopen(log_name_1.data(),"a");
+                  fprintf(record_file_1, "%d\n", agent_sim_1);
+                  fprintf(record_file_1, "%d\n", agent_diff_1);
+                  fclose(record_file_1);      
+                  FILE* record_file_2 = fopen(log_name_2.data(),"a");
+                  fprintf(record_file_2, "%d\n", agent_sim_2);
+                  fprintf(record_file_2, "%d\n", agent_diff_2);
+                  fclose(record_file_2);    
                   return;
                 }
               }
@@ -195,15 +202,24 @@ class HanabiThreadLoop : public rela::ThreadLoop {
           int curPlayer = envs_[i]->getCurrentPlayer();
 
           actors[0]->act(*envs_[i], curPlayer);
-          actors[1]->act(*envs_[i], curPlayer);
-          int main_3_act = actors[2]->recordAct(*envs_[i], curPlayer);
-          int partner_act = actors[3]->beforeAct(curPlayer);
+          int main_1_act = actors[1]->recordAct(*envs_[i], curPlayer);
+          int partner_1_act = actors[2]->beforeAct(curPlayer);
+          int main_2_act = actors[3]->recordAct(*envs_[i], curPlayer);
+          int partner_2_act = actors[4]->beforeAct(curPlayer);
 
-          if (main_3_act != -1){
-            if (main_3_act == partner_act){
-              agent_sim += 1;
+          if (main_1_act != -1){
+            if (main_1_act == partner_1_act){
+              agent_sim_1 += 1;
             } else {
-              agent_diff +=1;
+              agent_diff_1 +=1;
+            }
+          }
+
+          if (main_2_act != -1){
+            if (main_2_act == partner_2_act){
+              agent_sim_2 += 1;
+            } else {
+              agent_diff_2 +=1;
             }
           }
 
