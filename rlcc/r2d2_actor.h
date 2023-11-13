@@ -30,7 +30,8 @@ class R2D2Actor {
       // if replay buffer is None, then all params below are not used
       int multiStep,
       int seqLen,
-      float gamma)
+      float gamma,
+      int playStyles = 0)
       : runner_(std::move(runner))
       , rng_(seed)
       , numPlayer_(numPlayer)
@@ -48,6 +49,7 @@ class R2D2Actor {
       , playerTemp_(batchsize_)
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
+      , playStyles_(playStyles)
       , replayBuffer_(std::move(replayBuffer))
       , r2d2Buffer_(std::make_unique<rela::R2D2Buffer>(multiStep, seqLen, gamma)) {
   }
@@ -60,7 +62,8 @@ class R2D2Actor {
       bool vdn,
       bool sad,
       bool hideAction,
-      bool isRef)
+      bool isRef,
+      int playStyles = 0)
       : runner_(std::move(runner))
       , rng_(1)  // not used in eval mode
       , numPlayer_(numPlayer)
@@ -77,6 +80,7 @@ class R2D2Actor {
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(nullptr)
+      , playStyles_(playStyles)
       , r2d2Buffer_(nullptr) {
   }
 
@@ -87,7 +91,8 @@ class R2D2Actor {
       int playerIdx,
       bool vdn,
       bool sad,
-      bool hideAction)
+      bool hideAction,
+      int playStyles = 0)
       : runner_(std::move(runner))
       , rng_(1)  // not used in eval mode
       , numPlayer_(numPlayer)
@@ -104,6 +109,7 @@ class R2D2Actor {
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(nullptr)
+      , playStyles_(playStyles)
       , r2d2Buffer_(nullptr) {
   }
 
@@ -159,6 +165,7 @@ class R2D2Actor {
   std::shared_ptr<rela::BatchRunner> classifier_;
   std::mt19937 rng_;
   const int numPlayer_;
+  const int playStyles_;
   const int playerIdx_;
   const std::vector<float> epsList_;
   const std::vector<float> tempList_;
