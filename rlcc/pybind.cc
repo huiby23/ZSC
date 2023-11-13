@@ -80,14 +80,16 @@ PYBIND11_MODULE(hanalearn, m) {
            // if replay buffer is None, then all params below are not used
            int,       // multiStep,
            int,       // seqLen,
-           float>())  // gamma
+           float,  // gamma,
+           int>()) //playStyles
       .def(py::init<
            std::shared_ptr<rela::BatchRunner>,
            int,      // numPlayer
            int,      // playerIdx
            bool,     // vdn
            bool,     // sad
-           bool>())  // hideAction
+           bool,  // hideAction
+           int>()) // playStyles
       .def(py::init<
            std::shared_ptr<rela::BatchRunner>,
            int,      // numPlayer
@@ -95,7 +97,8 @@ PYBIND11_MODULE(hanalearn, m) {
            bool,     // vdn
            bool,     // sad
            bool,     // hideAction
-           bool>())  // isref
+           bool,  // isref
+           int>()) // playStyles
       .def("set_partners", &R2D2Actor::setPartners)
       .def("set_belief_runner", &R2D2Actor::setBeliefRunner)
       .def("get_success_fict_rate", &R2D2Actor::getSuccessFictRate)
