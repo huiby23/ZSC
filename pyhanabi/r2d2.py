@@ -48,8 +48,11 @@ class R2D2Agent(torch.jit.ScriptModule):
         max_len=None,
         adv_type=0,
         adv_ratio=0,
+        play_styles=0,
     ):
         super().__init__()
+        self.play_styles = play_styles
+        in_dim += play_styles
         if net == "ffwd":
             self.online_net = FFWDNet(in_dim, hid_dim, out_dim).to(device)
             self.target_net = FFWDNet(in_dim, hid_dim, out_dim).to(device)
@@ -171,6 +174,8 @@ class R2D2Agent(torch.jit.ScriptModule):
             [batchsize] or [batchsize, num_player]
         """
         priv_s = obs["priv_s"]
+        if self.play_styles > 0:
+            priv_s = torch.cat(priv_s,obs["playStyle"],dim=-1)
         publ_s = obs["publ_s"]
         legal_move = obs["legal_move"]
         if "eps" in obs:
@@ -252,6 +257,8 @@ class R2D2Agent(torch.jit.ScriptModule):
     ) -> Dict[str, torch.Tensor]:
         assert self.multi_step == 1
         priv_s = input_["priv_s"]
+        if self.play_styles > 0:
+            priv_s = torch.cat(priv_s,input_["playStyle"],dim=-1)
         publ_s = input_["publ_s"]
         legal_move = input_["legal_move"]
         act_hid = {
@@ -329,6 +336,8 @@ class R2D2Agent(torch.jit.ScriptModule):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         max_seq_len = obs["priv_s"].size(0)
         priv_s = obs["priv_s"]
+        if self.play_styles > 0:
+            priv_s = torch.cat(priv_s,obs["playStyle"],dim=-1)
         publ_s = obs["publ_s"]
         legal_move = obs["legal_move"]
         action = action["a"]
@@ -468,6 +477,8 @@ class R2D2Agent(torch.jit.ScriptModule):
     def behavior_clone_loss(self, online_q, batch, t, clone_bot, stat):
         max_seq_len = batch.obs["priv_s"].size(0)
         priv_s = batch.obs["priv_s"]
+        if self.play_styles > 0:
+            priv_s = torch.cat(priv_s,batch.obs["playStyle"],dim=-1)
         publ_s = batch.obs["publ_s"]
         legal_move = batch.obs["legal_move"]
 
