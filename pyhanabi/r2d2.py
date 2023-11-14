@@ -185,7 +185,7 @@ class R2D2Agent(torch.jit.ScriptModule):
 
         if self.vdn:
             bsize, num_player = obs["priv_s"].size()[:2]
-            priv_s = obs["priv_s"].flatten(0, 1)
+            priv_s = priv_s.flatten(0, 1)
             publ_s = obs["publ_s"].flatten(0, 1)
             legal_move = obs["legal_move"].flatten(0, 1)
         else:
