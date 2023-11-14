@@ -100,13 +100,27 @@ def parse_args():
     parser.add_argument("--act_device", type=str, default="cuda:1")
     parser.add_argument("--actor_sync_freq", type=int, default=10)
 
-    #adversarial training setting
+    # adversarial training setting
     parser.add_argument("--adv_type", type=int, default=0)
     parser.add_argument("--adv_ratio", type=float, default=0.0)   
 
-    #non-parameter sharing setting
+    # non-parameter sharing setting
     parser.add_argument("--no_sharing", type=bool, default=False)     
 
+    # playstyles setting
+    parser.add_argument("--play_styles", type=int, default=0)
+    parser.add_argument("--encoding_duplicate", type=int, default=1)
+
+    # PBL-encoding training setting
+    parser.add_argument("--training_type", type=int, default=0)
+    # 0 - regular training
+    # 1 - one main agent and one partner agent, training
+    # 2 - one main agent and one partner agent, with each round randomly choosing main vs partner or partner vs partner
+    # 3 - partner vs partner training first, then main vs partner training 
+    parser.add_argument("--train_main_prob", type=float, default=0.5) # used in type-2 training   
+    parser.add_argument("--stage1_epoch", type=int, default=100) # used in type 3 training
+
+    # training setting
     args = parser.parse_args()
     if args.off_belief == 1:
         args.method = "iql"
@@ -203,7 +217,6 @@ if __name__ == "__main__":
 
 
         if args.load_model and args.load_model != "None":
-
             print("*****loading pretrained model*****")
             print(args.load_model)
             utils.load_weight(agent.online_net, (args.load_model+'model0.pthw'), args.train_device)
