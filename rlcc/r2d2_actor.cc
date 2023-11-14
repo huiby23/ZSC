@@ -136,10 +136,14 @@ void R2D2Actor::reset(const HanabiEnv& env) {
     r2d2Buffer_->init(hidden_);
   }
   if (playStyles_ > 0){
-    std::vector<int> presentStyle_(playStyles_, 0);
+    std::vector<int> presentStyle_(playStyles_*encodingDuplicate_, 0);
     srand((unsigned)time(NULL)); 
     int randomPosition = rand() % playStyles_;
-    presentStyle_[randomPosition] = 1;
+    for (int i = 0; i < encodingDuplicate_; i++){
+      randomPosition += i*playStyles_;
+      presentStyle_[randomPosition] = 1;
+    }
+    
   }
 
   const auto& game = env.getHleGame();
