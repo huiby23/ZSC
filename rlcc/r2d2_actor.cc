@@ -6,6 +6,8 @@
 //
 #include "rlcc/r2d2_actor.h"
 #include "rlcc/utils.h"
+#include <stdlib.h>
+#include <time.h> 
 
 void addHid(rela::TensorDict& to, rela::TensorDict& hid) {
   for (auto& kv : hid) {
@@ -133,6 +135,12 @@ void R2D2Actor::reset(const HanabiEnv& env) {
   if (r2d2Buffer_ != nullptr) {
     r2d2Buffer_->init(hidden_);
   }
+  if (playStyles_ > 0){
+    std::vector<int> presentStyle_(playStyles_, 0);
+    srand((unsigned)time(NULL)); 
+    int randomPosition = rand() % playStyles_;
+    presentStyle_[randomPosition] = 1;
+  }
 
   const auto& game = env.getHleGame();
   int fixColorPlayer = -1;
@@ -206,6 +214,9 @@ void R2D2Actor::observeBeforeAct(const HanabiEnv& env) {
   }
 
   // add features such as eps and temperature
+  if (playStyles_ > 0){
+    input["playStyle"] = torch::tensor(presentStyle_);
+  }
   input["eps"] = torch::tensor(playerEps_);
   if (playerTemp_.size() > 0) {
     input["temperature"] = torch::tensor(playerTemp_);
