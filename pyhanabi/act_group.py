@@ -43,12 +43,12 @@ class ActGroup:
         off_belief,
         belief_model,
         agent_p = None,
-        agent_params = None,
-        agent_p_params = None,
+        agent_params = None, 
         replay_buffer_p = None,
     ):
         self.devices = devices.split(",")
-
+        if (agent_params == None):
+            agent_params = {'play_styles':0, 'encoding_duplicate':1}
         if agent_p is not None:
             self.model_runners = []
             self.model_runners_p = []
@@ -74,82 +74,42 @@ class ActGroup:
                 thread_actors = []
                 for j in range(num_game_per_thread):
                     game_actors = []
-                    if agent_params == None:
-                        actor = hanalearn.R2D2Actor(
-                            self.model_runners[i % self.num_runners],
-                            seed,
-                            num_player,
-                            0,
-                            explore_eps,
-                            boltzmann_t,
-                            False,
-                            sad,
-                            shuffle_color,
-                            hide_action,
-                            trinary,
-                            replay_buffer,
-                            multi_step,
-                            max_len,
-                            gamma,
-                        )
-                    else:
-                        actor = hanalearn.R2D2Actor(
-                            self.model_runners[i % self.num_runners],
-                            seed,
-                            num_player,
-                            0,
-                            explore_eps,
-                            boltzmann_t,
-                            False,
-                            sad,
-                            shuffle_color,
-                            hide_action,
-                            trinary,
-                            replay_buffer,
-                            multi_step,
-                            max_len,
-                            gamma,
-                            agent_params["play_styles"],
-                            agent_params["encoding_duplicate"],
-                        )                        
-                    if agent_p_params == None:
-                        actor_p = hanalearn.R2D2Actor(
-                            self.model_runners_p[i % self.num_runners],
-                            seed,
-                            num_player,
-                            1,
-                            explore_eps,
-                            boltzmann_t,
-                            False,
-                            sad,
-                            shuffle_color,
-                            hide_action,
-                            trinary,
-                            replay_buffer_p,
-                            multi_step,
-                            max_len,
-                            gamma,
-                        )
-                    else:
-                        actor_p = hanalearn.R2D2Actor(
-                            self.model_runners_p[i % self.num_runners],
-                            seed,
-                            num_player,
-                            1,
-                            explore_eps,
-                            boltzmann_t,
-                            False,
-                            sad,
-                            shuffle_color,
-                            hide_action,
-                            trinary,
-                            replay_buffer_p,
-                            multi_step,
-                            max_len,
-                            gamma,
-                            agent_p_params["play_styles"],
-                            agent_p_params["encoding_duplicate"],
-                        )                        
+                    actor = hanalearn.R2D2Actor(
+                        self.model_runners[i % self.num_runners],
+                        seed,
+                        num_player,
+                        0,
+                        explore_eps,
+                        boltzmann_t,
+                        False,
+                        sad,
+                        shuffle_color,
+                        hide_action,
+                        trinary,
+                        replay_buffer,
+                        multi_step,
+                        max_len,
+                        gamma,
+                    )                   
+                    actor_p = hanalearn.R2D2Actor(
+                        self.model_runners_p[i % self.num_runners],
+                        seed,
+                        num_player,
+                        1,
+                        explore_eps,
+                        boltzmann_t,
+                        False,
+                        sad,
+                        shuffle_color,
+                        hide_action,
+                        trinary,
+                        replay_buffer_p,
+                        multi_step,
+                        max_len,
+                        gamma,
+                        agent_params["play_styles"],
+                        agent_params["encoding_duplicate"],
+                    )                        
 
                     seed += 1
                     game_actors = [actor,actor_p]
@@ -203,6 +163,8 @@ class ActGroup:
                             multi_step,
                             max_len,
                             gamma,
+                            agent_params["play_styles"],
+                            agent_params["encoding_duplicate"],
                         )
                         seed += 1
                         thread_actors.append([actor])
@@ -229,6 +191,8 @@ class ActGroup:
                                 multi_step,
                                 max_len,
                                 gamma,
+                                agent_params["play_styles"],
+                                agent_params["encoding_duplicate"],
                             )
                             if self.off_belief:
                                 if self.belief_runner is None:
