@@ -42,12 +42,12 @@ class ActGroup:
         gamma,
         off_belief,
         belief_model,
-        agent_p = None,
-        agent_params = None, 
-        replay_buffer_p = None,
+        agent_p = None, 
+        replay_buffer_p = None, 
+        agent_params = None,  
     ):
         self.devices = devices.split(",")
-        if (agent_params == None):
+        if (agent_params is None):
             agent_params = {'play_styles':0, 'encoding_duplicate':1}
         if agent_p is not None:
             self.model_runners = []
