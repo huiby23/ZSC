@@ -32,7 +32,8 @@ class R2D2Actor {
       int seqLen,
       float gamma,
       int playStyles = 0,
-      int encodingDuplicate = 1)
+      int encodingDuplicate = 1,
+      bool randPerstep = false)
       : runner_(std::move(runner))
       , rng_(seed)
       , numPlayer_(numPlayer)
@@ -52,6 +53,7 @@ class R2D2Actor {
       , invColorPermutes_(batchsize_)
       , playStyles_(playStyles)
       , encodingDuplicate_(encodingDuplicate)
+      , randPerstep_(randPerstep)
       , replayBuffer_(std::move(replayBuffer))
       , r2d2Buffer_(std::make_unique<rela::R2D2Buffer>(multiStep, seqLen, gamma)) {
   }
@@ -66,7 +68,8 @@ class R2D2Actor {
       bool hideAction,
       bool isRef,
       int playStyles = 0,
-      int encodingDuplicate = 1)
+      int encodingDuplicate = 1,
+      bool randPerstep = false)
       : runner_(std::move(runner))
       , rng_(1)  // not used in eval mode
       , numPlayer_(numPlayer)
@@ -85,6 +88,7 @@ class R2D2Actor {
       , replayBuffer_(nullptr)
       , playStyles_(playStyles)
       , encodingDuplicate_(encodingDuplicate)
+      , randPerstep_(randPerstep)
       , r2d2Buffer_(nullptr) {
   }
 
@@ -97,7 +101,8 @@ class R2D2Actor {
       bool sad,
       bool hideAction,
       int playStyles = 0,
-      int encodingDuplicate = 1)
+      int encodingDuplicate = 1,
+      bool randPerstep = false)
       : runner_(std::move(runner))
       , rng_(1)  // not used in eval mode
       , numPlayer_(numPlayer)
@@ -116,6 +121,7 @@ class R2D2Actor {
       , replayBuffer_(nullptr)
       , playStyles_(playStyles)
       , encodingDuplicate_(encodingDuplicate)
+      , randPerstep_(randPerstep)
       , r2d2Buffer_(nullptr) {
   }
 
@@ -172,6 +178,7 @@ class R2D2Actor {
   std::mt19937 rng_;
   const int numPlayer_;
   const int playStyles_;
+  const bool randPerstep_;
   const int playerIdx_;
   const std::vector<float> epsList_;
   const std::vector<float> tempList_;

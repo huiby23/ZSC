@@ -110,6 +110,7 @@ def parse_args():
     # playstyles setting
     parser.add_argument("--play_styles", type=int, default=0)
     parser.add_argument("--encoding_duplicate", type=int, default=1)
+    parser.add_argument("--rand_perstep", type=bool, default=False)  
 
     # PBL-encoding training setting
     parser.add_argument("--training_type", type=int, default=0)
@@ -255,7 +256,7 @@ if __name__ == "__main__":
         belief_model = None
         
         print('Agent initialization complete. Disable parameter sharing.')
-        agent_params = {'play_styles':args.play_styles, 'encoding_duplicate':args.encoding_duplicate}
+        agent_params = {'play_styles':args.play_styles, 'encoding_duplicate':args.encoding_duplicate, 'rand_perstep':args.rand_perstep}
 
         if args.training_type == 0: # regular training: 
             print('type 0 population based training')
@@ -844,8 +845,6 @@ if __name__ == "__main__":
                     args.hide_action,
                 )
 
-
-
                 force_save_name = None
                 if epoch > 0 and epoch % 50 == 0:
                     force_save_name = "model_epoch%d" % epoch
@@ -857,9 +856,7 @@ if __name__ == "__main__":
                     "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
                     % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
                 )
-
                 print("==========")
-
 
     else:
 

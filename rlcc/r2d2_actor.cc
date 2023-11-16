@@ -217,8 +217,17 @@ void R2D2Actor::observeBeforeAct(const HanabiEnv& env) {
         sad_);
   }
 
-  // add features such as eps and temperature
+  // add features such as playstyle, eps and temperature
   if (playStyles_ > 0){
+    if (randPerstep_){
+      std::fill(presentStyle_.begin(), presentStyle_.end(), 0);
+      srand((unsigned)time(NULL)); 
+      randomPosition = rand() % playStyles_;
+      for (int i = 0; i < encodingDuplicate_; i++){
+        randomPosition += i*playStyles_;
+        presentStyle_[randomPosition] = 1;
+      }
+    }
     input["playStyle"] = torch::tensor(presentStyle_);
   }
   input["eps"] = torch::tensor(playerEps_);

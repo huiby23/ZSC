@@ -111,6 +111,7 @@ class ActGroup:
                             gamma,
                             agent_params["play_styles"],
                             agent_params["encoding_duplicate"],
+                            agent_params["rand_perstep"],
                         )                        
 
                         seed += 1
@@ -139,6 +140,7 @@ class ActGroup:
                             gamma,
                             agent_params["play_styles"],
                             agent_params["encoding_duplicate"],
+                            agent_params["rand_perstep"],
                         )    
 
                         actor_p2 = hanalearn.R2D2Actor(
@@ -159,6 +161,7 @@ class ActGroup:
                             gamma,
                             agent_params["play_styles"],
                             agent_params["encoding_duplicate"],
+                            agent_params["rand_perstep"],
                         )                        
 
                         seed += 1
@@ -209,6 +212,7 @@ class ActGroup:
                             gamma,
                             agent_params["play_styles"],
                             agent_params["encoding_duplicate"],
+                            agent_params["rand_perstep"],
                         )                        
 
                         seed += 1
@@ -265,6 +269,7 @@ class ActGroup:
                             gamma,
                             agent_params["play_styles"],
                             agent_params["encoding_duplicate"],
+                            agent_params["rand_perstep"],
                         )
                         seed += 1
                         thread_actors.append([actor])
@@ -293,6 +298,7 @@ class ActGroup:
                                 gamma,
                                 agent_params["play_styles"],
                                 agent_params["encoding_duplicate"],
+                                agent_params["rand_perstep"],
                             )
                             if self.off_belief:
                                 if self.belief_runner is None:
