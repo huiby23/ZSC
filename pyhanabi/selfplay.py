@@ -113,12 +113,12 @@ def parse_args():
 
     # PBL-encoding training setting
     parser.add_argument("--training_type", type=int, default=0)
-    # 0 - regular training
-    # 1 - one main agent and one partner agent, training
+    # 0 - one main agent and one partner agent, training
+    # 1 - partner vs partner training first, then main vs partner training 
     # 2 - one main agent and one partner agent, with each round randomly choosing main vs partner or partner vs partner
-    # 3 - partner vs partner training first, then main vs partner training 
-    parser.add_argument("--train_main_prob", type=float, default=0.5) # used in type-2 training   
-    parser.add_argument("--stage1_epoch", type=int, default=100) # used in type 3 training
+    
+    parser.add_argument("--train_main_prob", type=float, default=0.5) # used in type1 training   
+    parser.add_argument("--population_epoch", type=int, default=100) # used in type2 training
 
     # training setting
     args = parser.parse_args()
@@ -177,6 +177,11 @@ if __name__ == "__main__":
     )
 
     if args.no_sharing:
+        if args.play_styles > 0:
+            agent_playstyles = args.play_styles * args.encoding_duplicate
+        else:
+            agent_playstyles = 0
+
         agent = r2d2.R2D2Agent(
             (args.method == "vdn"),
             args.multi_step,
@@ -212,6 +217,7 @@ if __name__ == "__main__":
             args.off_belief,
             adv_type=args.adv_type,
             adv_ratio=args.adv_ratio,
+            play_styles=agent_playstyles,
         )
         agent_p.sync_target_with_online()  
 
@@ -222,6 +228,7 @@ if __name__ == "__main__":
             utils.load_weight(agent.online_net, (args.load_model+'model0.pthw'), args.train_device)
             utils.load_weight(agent_p.online_net, (args.load_model+'p_model0.pthw'), args.train_device)
             print("*****done*****")
+        # partner model is saved along with the main model by default
 
         agent = agent.to(args.train_device)
         agent_p = agent_p.to(args.train_device)
@@ -247,143 +254,612 @@ if __name__ == "__main__":
         )
         belief_model = None
         
+        print('Agent initialization complete. Disable parameter sharing.')
+        agent_params = {'play_styles':args.play_styles, 'encoding_duplicate':args.encoding_duplicate}
 
-        act_group = ActGroup(
-            args.act_device,
-            agent,
-            args.seed,
-            args.num_thread,
-            args.num_game_per_thread,
-            args.num_player,
-            explore_eps,
-            boltzmann_t,
-            args.method,
-            args.sad,
-            args.shuffle_color,
-            args.hide_action,
-            True,  # trinary, 3 bits for aux task
-            replay_buffer,
-            args.multi_step,
-            args.max_len,
-            args.gamma,
-            args.off_belief,
-            belief_model,
-            agent_p,
-            replay_buffer_p,
-        )
-
-        context, threads = create_threads(
-            args.num_thread,
-            args.num_game_per_thread,
-            act_group.actors,
-            games,
-        )
-
-        act_group.start_nonsharing()
-        context.start()
-        while replay_buffer.size() < args.burn_in_frames:
-            print("warming up replay buffer:", replay_buffer.size())
-            time.sleep(1)
-
-        print("Success, Done")
-        print("=======================")
-
-        frame_stat = dict()
-        frame_stat["num_acts"] = 0
-        frame_stat["num_buffer"] = 0
-
-        stat = common_utils.MultiCounter(args.save_dir)
-        tachometer = utils.Tachometer()
-        stopwatch = common_utils.Stopwatch()
-
-        for epoch in range(args.num_epoch):
-            print("beginning of epoch: ", epoch)
-            print(common_utils.get_mem_usage())
-            tachometer.start()
-            stat.reset()
-            stopwatch.reset()
-
-            for batch_idx in range(args.epoch_len):
-                num_update = batch_idx + epoch * args.epoch_len
-                if num_update % args.num_update_between_sync == 0:
-                    agent.sync_target_with_online()
-                    agent_p.sync_target_with_online()
-                if num_update % args.actor_sync_freq == 0:
-                    act_group.update_model_nonsharing(agent,agent_p)
-
-                torch.cuda.synchronize()
-                stopwatch.time("sync and updating")
-
-                batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
-                stopwatch.time("sample data")
-
-                loss, priority, online_q = agent.loss(batch, args.aux_weight, stat)
-                loss = (loss * weight).mean()
-                loss.backward()
-                
-                batch_p, weight_p = replay_buffer_p.sample(args.batchsize, args.train_device)
-                loss_p, priority_p, online_q_p = agent_p.loss(batch_p, args.aux_weight, stat)
-                loss_p = (loss_p * weight).mean()
-                loss_p.backward()
-                torch.cuda.synchronize()
-                stopwatch.time("forward & backward")
-
-                g_norm = torch.nn.utils.clip_grad_norm_(
-                    agent.online_net.parameters(), args.grad_clip
-                )
-                optim.step()
-                optim.zero_grad()
-                g_norm_p = torch.nn.utils.clip_grad_norm_(
-                    agent_p.online_net.parameters(), args.grad_clip
-                )
-                optim_p.step()
-                optim_p.zero_grad()
-
-                torch.cuda.synchronize()
-                stopwatch.time("update model")
-
-                replay_buffer.update_priority(priority)
-                replay_buffer_p.update_priority(priority_p)
-                stopwatch.time("updating priority")
-
-                stat["loss"].feed(loss.detach().item())
-                stat["grad_norm"].feed(g_norm)
-                stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
-                stat["loss_p"].feed(loss_p.detach().item())
-                stat["grad_norm_p"].feed(g_norm_p)
-                stat["boltzmann_t_p"].feed(batch_p.obs["temperature"][0].mean())
-
-            count_factor = args.num_player if args.method == "vdn" else 1
-            print("EPOCH: %d" % epoch)
-            tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
-            stopwatch.summary()
-            stat.summary(epoch)
-
-            eval_seed = (9917 + epoch * 999999) % 7777777
-            eval_agent.load_state_dict(agent.state_dict())
-            eval_agent_p.load_state_dict(agent_p.state_dict())
-            score, perfect, *_ = evaluate(
-                [eval_agent, eval_agent_p],
-                1000,
-                eval_seed,
-                args.eval_bomb,
-                0,  # explore eps
+        if args.training_type == 0: # regular training: 
+            print('type 0 population based training')
+            act_group = ActGroup(
+                args.act_device,
+                agent,
+                args.seed,
+                args.num_thread,
+                args.num_game_per_thread,
+                args.num_player,
+                explore_eps,
+                boltzmann_t,
+                args.method,
                 args.sad,
+                args.shuffle_color,
                 args.hide_action,
+                True,  # trinary, 3 bits for aux task
+                replay_buffer,
+                args.multi_step,
+                args.max_len,
+                args.gamma,
+                args.off_belief,
+                belief_model,
+                agent_p,
+                replay_buffer_p,
+                agent_params
             )
 
-            force_save_name = None
-            if epoch > 0 and epoch % 100 == 0:
-                force_save_name = "model_epoch%d" % epoch
-            model_saved = saver.save(
-                None, agent.online_net.state_dict(), score, False, force_save_name, agent_p.online_net.state_dict()
-            )
-            print(
-                "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
-                % (epoch, score, perfect * 100, model_saved)
+            context, threads = create_threads(
+                args.num_thread,
+                args.num_game_per_thread,
+                act_group.actors,
+                games,
             )
 
-            print("==========")
+            act_group.start_nonsharing()
+            context.start()
+            while replay_buffer.size() < args.burn_in_frames:
+                print("warming up replay buffer:", replay_buffer.size())
+                time.sleep(2)
+
+            print("Success, Done")
+            print("=======================")
+
+            frame_stat = dict()
+            frame_stat["num_acts"] = 0
+            frame_stat["num_buffer"] = 0
+
+            stat = common_utils.MultiCounter(args.save_dir)
+            tachometer = utils.Tachometer()
+            stopwatch = common_utils.Stopwatch()
+
+            for epoch in range(args.num_epoch):
+                print("beginning of epoch: ", epoch)
+                print(common_utils.get_mem_usage())
+                tachometer.start()
+                stat.reset()
+                stopwatch.reset()
+
+                for batch_idx in range(args.epoch_len):
+                    num_update = batch_idx + epoch * args.epoch_len
+                    if num_update % args.num_update_between_sync == 0:
+                        agent.sync_target_with_online()
+                        agent_p.sync_target_with_online()
+                    if num_update % args.actor_sync_freq == 0:
+                        act_group.update_model_nonsharing(agent,agent_p)
+
+                    torch.cuda.synchronize()
+                    stopwatch.time("sync and updating")
+
+                    batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
+                    stopwatch.time("sample data")
+
+                    loss, priority, online_q = agent.loss(batch, args.aux_weight, stat)
+                    loss = (loss * weight).mean()
+                    loss.backward()
+                    
+                    batch_p, weight_p = replay_buffer_p.sample(args.batchsize, args.train_device)
+                    loss_p, priority_p, online_q_p = agent_p.loss(batch_p, args.aux_weight, stat)
+                    loss_p = (loss_p * weight).mean()
+                    loss_p.backward()
+                    torch.cuda.synchronize()
+                    stopwatch.time("forward & backward")
+
+                    g_norm = torch.nn.utils.clip_grad_norm_(
+                        agent.online_net.parameters(), args.grad_clip
+                    )
+                    optim.step()
+                    optim.zero_grad()
+                    g_norm_p = torch.nn.utils.clip_grad_norm_(
+                        agent_p.online_net.parameters(), args.grad_clip
+                    )
+                    optim_p.step()
+                    optim_p.zero_grad()
+
+                    torch.cuda.synchronize()
+                    stopwatch.time("update model")
+
+                    replay_buffer.update_priority(priority)
+                    replay_buffer_p.update_priority(priority_p)
+                    stopwatch.time("updating priority")
+
+                    stat["loss"].feed(loss.detach().item())
+                    stat["grad_norm"].feed(g_norm)
+                    stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
+                    stat["loss_p"].feed(loss_p.detach().item())
+                    stat["grad_norm_p"].feed(g_norm_p)
+                    stat["boltzmann_t_p"].feed(batch_p.obs["temperature"][0].mean())
+
+                count_factor = args.num_player if args.method == "vdn" else 1
+                print("EPOCH: %d" % epoch)
+                tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
+                stopwatch.summary()
+                stat.summary(epoch)
+
+                eval_seed = (9917 + epoch * 999999) % 7777777
+                eval_agent.load_state_dict(agent.state_dict())
+                eval_agent_p.load_state_dict(agent_p.state_dict())
+
+                score_mm, perfect_mm, *_ = evaluate(
+                    [eval_agent, eval_agent],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                )
+
+                score_mp, perfect_mp, *_ = evaluate(
+                    [eval_agent, eval_agent_p],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                )
+
+                score_pp, perfect_pp, *_ = evaluate(
+                    [eval_agent_p, eval_agent_p],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                )
+
+
+
+                force_save_name = None
+                if epoch > 0 and epoch % 50 == 0:
+                    force_save_name = "model_epoch%d" % epoch
+                model_saved = saver.save(
+                    None, agent.online_net.state_dict(), score_mp, False, force_save_name, agent_p.online_net.state_dict()
+                )
+
+                print(
+                    "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
+                    % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
+                )
+
+                print("==========")
+        elif args.training_type == 1: # train population first and then train main agents
+            print('type 1 population based training')
+            print('stage 1 training: train a population')
+            act_group_p = ActGroup(
+                args.act_device,
+                agent_p,
+                args.seed,
+                args.num_thread,
+                args.num_game_per_thread,
+                args.num_player,
+                explore_eps,
+                boltzmann_t,
+                args.method,
+                args.sad,
+                args.shuffle_color,
+                args.hide_action,
+                True,  # trinary, 3 bits for aux task
+                replay_buffer_p,
+                args.multi_step,
+                args.max_len,
+                args.gamma,
+                args.off_belief,
+                belief_model,
+                agent_params = agent_params
+            )
+
+            context, threads = create_threads(
+                args.num_thread,
+                args.num_game_per_thread,
+                act_group_p.actors,
+                games,
+            )
+
+            act_group_p.start()
+            context.start()
+            
+            while replay_buffer_p.size() < args.burn_in_frames:
+                print("warming up replay buffer:", replay_buffer_p.size())
+                time.sleep(2)
+
+            print("Success, Done")
+            print("=======================")
+
+            frame_stat = dict()
+            frame_stat["num_acts"] = 0
+            frame_stat["num_buffer"] = 0
+
+            stat = common_utils.MultiCounter(args.save_dir)
+            tachometer = utils.Tachometer()
+            stopwatch = common_utils.Stopwatch()
+
+            for epoch in range(args.population_epoch):
+                print("beginning of epoch: ", epoch)
+                print(common_utils.get_mem_usage())
+                tachometer.start()
+                stat.reset()
+                stopwatch.reset()
+
+                for batch_idx in range(args.epoch_len):
+                    num_update = batch_idx + epoch * args.epoch_len
+                    if num_update % args.num_update_between_sync == 0:
+                        agent_p.sync_target_with_online()
+                    if num_update % args.actor_sync_freq == 0:
+                        act_group_p.update_model(agent_p)
+
+                    torch.cuda.synchronize()
+                    stopwatch.time("sync and updating")
+
+                    batch, weight = replay_buffer_p.sample(args.batchsize, args.train_device)
+                    stopwatch.time("sample data")
+                    loss, priority, online_q = agent_p.loss(batch, args.aux_weight, stat)
+                    loss = (loss * weight).mean()
+                    loss.backward()
+
+                    torch.cuda.synchronize()
+                    stopwatch.time("forward & backward")
+
+                    g_norm = torch.nn.utils.clip_grad_norm_(
+                        agent_p.online_net.parameters(), args.grad_clip
+                    )
+                    optim.step()
+                    optim.zero_grad()
+
+                    torch.cuda.synchronize()
+                    stopwatch.time("update model")
+
+                    replay_buffer_p.update_priority(priority)
+                    stopwatch.time("updating priority")
+
+                    stat["loss"].feed(loss.detach().item())
+                    stat["grad_norm"].feed(g_norm)
+                    stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
+
+                count_factor = args.num_player if args.method == "vdn" else 1
+                print("EPOCH: %d" % epoch)
+                tachometer.lap(replay_buffer_p, args.epoch_len * args.batchsize, count_factor)
+                stopwatch.summary()
+                stat.summary(epoch)
+
+                eval_seed = (9917 + epoch * 999999) % 7777777
+                eval_agent_p.load_state_dict(agent_p.state_dict())
+                score, perfect, *_ = evaluate(
+                    [eval_agent_p for _ in range(args.num_player)],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                )
+
+                force_save_name = "partner_model"
+                if epoch > 0 and epoch % 100 == 0:
+                    force_save_name = "partner_model_epoch%d" % epoch
+                model_saved = saver.save(
+                    None, agent_p.online_net.state_dict(), score, force_save_name=force_save_name
+                )
+                print(
+                    "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
+                    % (epoch, score, perfect * 100, model_saved)
+                )
+
+            print('stage 1 training complete, start stage 2 training')
+            act_group = ActGroup(
+                args.act_device,
+                agent,
+                args.seed,
+                args.num_thread,
+                args.num_game_per_thread,
+                args.num_player,
+                explore_eps,
+                boltzmann_t,
+                args.method,
+                args.sad,
+                args.shuffle_color,
+                args.hide_action,
+                True,  # trinary, 3 bits for aux task
+                replay_buffer,
+                args.multi_step,
+                args.max_len,
+                args.gamma,
+                args.off_belief,
+                belief_model,
+                agent_p,
+                replay_buffer_p,
+                agent_params
+            )
+
+            context, threads = create_threads(
+                args.num_thread,
+                args.num_game_per_thread,
+                act_group.actors,
+                games,
+            )
+
+            act_group.start_nonsharing()
+            context.start()
+            while replay_buffer.size() < args.burn_in_frames:
+                print("warming up replay buffer:", replay_buffer.size())
+                time.sleep(2)
+
+            print("Success, Done")
+            print("=======================")
+
+            frame_stat = dict()
+            frame_stat["num_acts"] = 0
+            frame_stat["num_buffer"] = 0
+
+            stat = common_utils.MultiCounter(args.save_dir)
+            tachometer = utils.Tachometer()
+            stopwatch = common_utils.Stopwatch()
+
+            for epoch in range(args.num_epoch):
+                print("beginning of epoch: ", epoch)
+                print(common_utils.get_mem_usage())
+                tachometer.start()
+                stat.reset()
+                stopwatch.reset()
+
+                for batch_idx in range(args.epoch_len):
+                    num_update = batch_idx + epoch * args.epoch_len
+                    if num_update % args.num_update_between_sync == 0:
+                        agent.sync_target_with_online()
+                        agent_p.sync_target_with_online()
+                    if num_update % args.actor_sync_freq == 0:
+                        act_group.update_model_nonsharing(agent,agent_p)
+
+                    torch.cuda.synchronize()
+                    stopwatch.time("sync and updating")
+
+                    batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
+                    stopwatch.time("sample data")
+
+                    loss, priority, online_q = agent.loss(batch, args.aux_weight, stat)
+                    loss = (loss * weight).mean()
+                    loss.backward()
+
+                    # in stage 2 training, we do not update partner parameters                    
+                    # batch_p, weight_p = replay_buffer_p.sample(args.batchsize, args.train_device)
+                    # loss_p, priority_p, online_q_p = agent_p.loss(batch_p, args.aux_weight, stat)
+                    # loss_p = (loss_p * weight).mean()
+                    # loss_p.backward()
+                    torch.cuda.synchronize()
+                    stopwatch.time("forward & backward")
+
+                    g_norm = torch.nn.utils.clip_grad_norm_(
+                        agent.online_net.parameters(), args.grad_clip
+                    )
+                    optim.step()
+                    optim.zero_grad()
+                    # g_norm_p = torch.nn.utils.clip_grad_norm_(
+                    #     agent_p.online_net.parameters(), args.grad_clip
+                    # )
+                    # optim_p.step()
+                    # optim_p.zero_grad()
+
+                    torch.cuda.synchronize()
+                    stopwatch.time("update model")
+
+                    replay_buffer.update_priority(priority)
+                    # replay_buffer_p.update_priority(priority_p)
+                    stopwatch.time("updating priority")
+
+                    stat["loss"].feed(loss.detach().item())
+                    stat["grad_norm"].feed(g_norm)
+                    stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
+                    # stat["loss_p"].feed(loss_p.detach().item())
+                    # stat["grad_norm_p"].feed(g_norm_p)
+                    # stat["boltzmann_t_p"].feed(batch_p.obs["temperature"][0].mean())
+
+                count_factor = args.num_player if args.method == "vdn" else 1
+                print("EPOCH: %d" % epoch)
+                tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
+                stopwatch.summary()
+                stat.summary(epoch)
+
+                eval_seed = (9917 + epoch * 999999) % 7777777
+                eval_agent.load_state_dict(agent.state_dict())
+                eval_agent_p.load_state_dict(agent_p.state_dict())
+
+                score_mm, perfect_mm, *_ = evaluate(
+                    [eval_agent, eval_agent],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                )
+
+                score_mp, perfect_mp, *_ = evaluate(
+                    [eval_agent, eval_agent_p],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                )
+
+                force_save_name = None
+                if epoch > 0 and epoch % 50 == 0:
+                    force_save_name = "model_epoch%d" % epoch
+                model_saved = saver.save(
+                    None, agent.online_net.state_dict(), score_mp, False, force_save_name, agent_p.online_net.state_dict()
+                )
+
+                print(
+                    "epoch %d, score_mm: %.4f, score_mp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f"
+                    % (epoch, score_mm, score_mp, perfect_mm * 100, perfect_mp * 100)
+                )
+
+                print("==========")
+
+
+        elif args.training_type == 2: # train population and main agents together
+            print('type 2 population based training')
+            act_group = ActGroup(
+                args.act_device,
+                agent,
+                args.seed,
+                args.num_thread,
+                args.num_game_per_thread,
+                args.num_player,
+                explore_eps,
+                boltzmann_t,
+                args.method,
+                args.sad,
+                args.shuffle_color,
+                args.hide_action,
+                True,  # trinary, 3 bits for aux task
+                replay_buffer,
+                args.multi_step,
+                args.max_len,
+                args.gamma,
+                args.off_belief,
+                belief_model,
+                agent_p,
+                replay_buffer_p,
+                agent_params,
+                True,
+            )
+
+            context, threads = create_threads(
+                args.num_thread,
+                args.num_game_per_thread,
+                act_group.actors,
+                games,
+            )
+
+            act_group.start_nonsharing()
+            context.start()
+            while replay_buffer.size() < args.burn_in_frames:
+                print("warming up replay buffer:", replay_buffer.size())
+                time.sleep(2)
+
+            print("Success, Done")
+            print("=======================")
+
+            frame_stat = dict()
+            frame_stat["num_acts"] = 0
+            frame_stat["num_buffer"] = 0
+
+            stat = common_utils.MultiCounter(args.save_dir)
+            tachometer = utils.Tachometer()
+            stopwatch = common_utils.Stopwatch()
+
+            for epoch in range(args.num_epoch):
+                print("beginning of epoch: ", epoch)
+                print(common_utils.get_mem_usage())
+                tachometer.start()
+                stat.reset()
+                stopwatch.reset()
+
+                for batch_idx in range(args.epoch_len):
+                    num_update = batch_idx + epoch * args.epoch_len
+                    if num_update % args.num_update_between_sync == 0:
+                        agent.sync_target_with_online()
+                        agent_p.sync_target_with_online()
+                    if num_update % args.actor_sync_freq == 0:
+                        act_group.update_model_nonsharing(agent,agent_p)
+
+                    torch.cuda.synchronize()
+                    stopwatch.time("sync and updating")
+
+                    batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
+                    stopwatch.time("sample data")
+
+                    loss, priority, online_q = agent.loss(batch, args.aux_weight, stat)
+                    loss = (loss * weight).mean()
+                    loss.backward()
+                    
+                    batch_p, weight_p = replay_buffer_p.sample(args.batchsize, args.train_device)
+                    loss_p, priority_p, online_q_p = agent_p.loss(batch_p, args.aux_weight, stat)
+                    loss_p = (loss_p * weight).mean()
+                    loss_p.backward()
+                    torch.cuda.synchronize()
+                    stopwatch.time("forward & backward")
+
+                    g_norm = torch.nn.utils.clip_grad_norm_(
+                        agent.online_net.parameters(), args.grad_clip
+                    )
+                    optim.step()
+                    optim.zero_grad()
+                    g_norm_p = torch.nn.utils.clip_grad_norm_(
+                        agent_p.online_net.parameters(), args.grad_clip
+                    )
+                    optim_p.step()
+                    optim_p.zero_grad()
+
+                    torch.cuda.synchronize()
+                    stopwatch.time("update model")
+
+                    replay_buffer.update_priority(priority)
+                    replay_buffer_p.update_priority(priority_p)
+                    stopwatch.time("updating priority")
+
+                    stat["loss"].feed(loss.detach().item())
+                    stat["grad_norm"].feed(g_norm)
+                    stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
+                    stat["loss_p"].feed(loss_p.detach().item())
+                    stat["grad_norm_p"].feed(g_norm_p)
+                    stat["boltzmann_t_p"].feed(batch_p.obs["temperature"][0].mean())
+
+                count_factor = args.num_player if args.method == "vdn" else 1
+                print("EPOCH: %d" % epoch)
+                tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
+                stopwatch.summary()
+                stat.summary(epoch)
+
+                eval_seed = (9917 + epoch * 999999) % 7777777
+                eval_agent.load_state_dict(agent.state_dict())
+                eval_agent_p.load_state_dict(agent_p.state_dict())
+
+                score_mm, perfect_mm, *_ = evaluate(
+                    [eval_agent, eval_agent],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                )
+
+                score_mp, perfect_mp, *_ = evaluate(
+                    [eval_agent, eval_agent_p],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                )
+
+                score_pp, perfect_pp, *_ = evaluate(
+                    [eval_agent_p, eval_agent_p],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                )
+
+
+
+                force_save_name = None
+                if epoch > 0 and epoch % 50 == 0:
+                    force_save_name = "model_epoch%d" % epoch
+                model_saved = saver.save(
+                    None, agent.online_net.state_dict(), score_mp, False, force_save_name, agent_p.online_net.state_dict()
+                )
+
+                print(
+                    "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
+                    % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
+                )
+
+                print("==========")
+
 
     else:
 
