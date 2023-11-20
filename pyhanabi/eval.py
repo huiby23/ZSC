@@ -189,6 +189,7 @@ def evaluate(
     num_thread=10,
     max_len=80,
     device="cuda:0",
+    params=[None,None],
 ):
     """
     evaluate agents as long as they have a "act" function
@@ -216,9 +217,14 @@ def evaluate(
         for g_idx in range(t_idx * game_per_thread, (t_idx + 1) * game_per_thread):
             actors = []
             for i in range(num_player):
-                actor = hanalearn.R2D2Actor(
-                    runners[i], num_player, i, False, sad[i], hide_action[i]
-                )
+                if params[i]:
+                    actor = hanalearn.R2D2Actor(
+                        runners[i], num_player, i, False, sad[i], hide_action[i], params[i]["play_styles"], params[i]["encoding_duplicate"], params[i]["rand_perstep"]
+                    )
+                else:
+                    actor = hanalearn.R2D2Actor(
+                        runners[i], num_player, i, False, sad[i], hide_action[i]
+                    )
                 actors.append(actor)
                 all_actors.append(actor)
             thread_actors.append(actors)

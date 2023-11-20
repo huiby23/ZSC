@@ -394,6 +394,7 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
+                    [None,agent_params]
                 )
 
                 score_pp, perfect_pp, *_ = evaluate(
@@ -404,6 +405,7 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
+                    [agent_params,agent_params]
                 )
 
 
@@ -530,6 +532,7 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
+                    [agent_params,agent_params]
                 )
 
                 force_save_name = "partner_model"
@@ -679,6 +682,7 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
+                    [None,agent_params]
                 )
 
                 force_save_name = None
@@ -833,6 +837,7 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
+                    [None,agent_params]
                 )
 
                 score_pp, perfect_pp, *_ = evaluate(
@@ -843,6 +848,7 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
+                    [agent_params,agent_params]
                 )
 
                 force_save_name = None
