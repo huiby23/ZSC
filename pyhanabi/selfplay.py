@@ -117,9 +117,7 @@ def parse_args():
     # 0 - one main agent and one partner agent, training
     # 1 - partner vs partner training first, then main vs partner training 
     # 2 - one main agent and one partner agent, with each round randomly choosing main vs partner or partner vs partner
-    
-    parser.add_argument("--train_main_prob", type=float, default=0.5) # used in type1 training   
-    parser.add_argument("--population_epoch", type=int, default=100) # used in type2 training
+    parser.add_argument("--population_epoch", type=int, default=100) # used in type1 training
 
     # training setting
     args = parser.parse_args()
@@ -367,10 +365,11 @@ if __name__ == "__main__":
                     stat["boltzmann_t_p"].feed(batch_p.obs["temperature"][0].mean())
 
                 count_factor = args.num_player if args.method == "vdn" else 1
-                print("EPOCH: %d" % epoch)
-                tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
-                stopwatch.summary()
-                stat.summary(epoch)
+                if epoch > 0 and epoch % 10 == 0:
+                    print("EPOCH: %d" % epoch)
+                    tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
+                    stopwatch.summary()
+                    stat.summary(epoch)
 
                 eval_seed = (9917 + epoch * 999999) % 7777777
                 eval_agent.load_state_dict(agent.state_dict())
@@ -416,13 +415,12 @@ if __name__ == "__main__":
                 model_saved = saver.save(
                     None, agent.online_net.state_dict(), score_mp, False, force_save_name, agent_p.online_net.state_dict()
                 )
-
-                print(
-                    "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
-                    % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
-                )
-
-                print("==========")
+                if epoch > 0 and epoch % 10 == 0:
+                    print(
+                        "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
+                        % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
+                    )
+                    print("==========")
         elif args.training_type == 1: # train population first and then train main agents
             print('type 1 population based training')
             print('stage 1 training: train a population')
@@ -517,10 +515,11 @@ if __name__ == "__main__":
                     stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
 
                 count_factor = args.num_player if args.method == "vdn" else 1
-                print("EPOCH: %d" % epoch)
-                tachometer.lap(replay_buffer_p, args.epoch_len * args.batchsize, count_factor)
-                stopwatch.summary()
-                stat.summary(epoch)
+                if epoch > 0 and epoch % 10 == 0:
+                    print("EPOCH: %d" % epoch)
+                    tachometer.lap(replay_buffer_p, args.epoch_len * args.batchsize, count_factor)
+                    stopwatch.summary()
+                    stat.summary(epoch)
 
                 eval_seed = (9917 + epoch * 999999) % 7777777
                 eval_agent_p.load_state_dict(agent_p.state_dict())
@@ -541,10 +540,11 @@ if __name__ == "__main__":
                 model_saved = saver.save(
                     None, agent_p.online_net.state_dict(), score, force_save_name=force_save_name
                 )
-                print(
-                    "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
-                    % (epoch, score, perfect * 100, model_saved)
-                )
+                if epoch > 0 and epoch % 10 == 0:
+                    print(
+                        "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
+                        % (epoch, score, perfect * 100, model_saved)
+                    )
 
             print('stage 1 training complete, start stage 2 training')
             act_group = ActGroup(
@@ -655,10 +655,11 @@ if __name__ == "__main__":
                     # stat["boltzmann_t_p"].feed(batch_p.obs["temperature"][0].mean())
 
                 count_factor = args.num_player if args.method == "vdn" else 1
-                print("EPOCH: %d" % epoch)
-                tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
-                stopwatch.summary()
-                stat.summary(epoch)
+                if epoch > 0 and epoch % 10 == 0:
+                    print("EPOCH: %d" % epoch)
+                    tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
+                    stopwatch.summary()
+                    stat.summary(epoch)
 
                 eval_seed = (9917 + epoch * 999999) % 7777777
                 eval_agent.load_state_dict(agent.state_dict())
@@ -691,13 +692,12 @@ if __name__ == "__main__":
                 model_saved = saver.save(
                     None, agent.online_net.state_dict(), score_mp, False, force_save_name, agent_p.online_net.state_dict()
                 )
-
-                print(
-                    "epoch %d, score_mm: %.4f, score_mp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f"
-                    % (epoch, score_mm, score_mp, perfect_mm * 100, perfect_mp * 100)
-                )
-
-                print("==========")
+                if epoch > 0 and epoch % 10 == 0:
+                    print(
+                        "epoch %d, score_mm: %.4f, score_mp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f"
+                        % (epoch, score_mm, score_mp, perfect_mm * 100, perfect_mp * 100)
+                    )
+                    print("==========")
 
 
         elif args.training_type == 2: # train population and main agents together
@@ -810,10 +810,11 @@ if __name__ == "__main__":
                     stat["boltzmann_t_p"].feed(batch_p.obs["temperature"][0].mean())
 
                 count_factor = args.num_player if args.method == "vdn" else 1
-                print("EPOCH: %d" % epoch)
-                tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
-                stopwatch.summary()
-                stat.summary(epoch)
+                if epoch > 0 and epoch % 10 == 0:
+                    print("EPOCH: %d" % epoch)
+                    tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
+                    stopwatch.summary()
+                    stat.summary(epoch)
 
                 eval_seed = (9917 + epoch * 999999) % 7777777
                 eval_agent.load_state_dict(agent.state_dict())
@@ -857,12 +858,12 @@ if __name__ == "__main__":
                 model_saved = saver.save(
                     None, agent.online_net.state_dict(), score_mp, False, force_save_name, agent_p.online_net.state_dict()
                 )
-
-                print(
-                    "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
-                    % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
-                )
-                print("==========")
+                if epoch > 0 and epoch % 10 == 0:
+                    print(
+                        "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
+                        % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
+                    )
+                    print("==========")
 
     else:
 
