@@ -47,13 +47,13 @@ class R2D2Actor {
       , trinary_(trinary)
       , isRef_(false)
       , batchsize_(vdn_ ? numPlayer_ : 1)
+      , playStyles_(playStyles)
+      , randPerstep_(randPerstep)
+      , encodingDuplicate_(encodingDuplicate)
       , playerEps_(batchsize_)
       , playerTemp_(batchsize_)
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
-      , playStyles_(playStyles)
-      , encodingDuplicate_(encodingDuplicate)
-      , randPerstep_(randPerstep)
       , replayBuffer_(std::move(replayBuffer))
       , r2d2Buffer_(std::make_unique<rela::R2D2Buffer>(multiStep, seqLen, gamma)) {
   }
@@ -82,13 +82,13 @@ class R2D2Actor {
       , trinary_(true)
       , isRef_(isRef)
       , batchsize_(vdn_ ? numPlayer_ : 1)
+      , playStyles_(playStyles)
+      , randPerstep_(randPerstep)
+      , encodingDuplicate_(encodingDuplicate)
       , playerEps_(batchsize_)
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(nullptr)
-      , playStyles_(playStyles)
-      , encodingDuplicate_(encodingDuplicate)
-      , randPerstep_(randPerstep)
       , r2d2Buffer_(nullptr) {
   }
 
@@ -115,13 +115,13 @@ class R2D2Actor {
       , trinary_(true)
       , isRef_(false)
       , batchsize_(vdn_ ? numPlayer_ : 1)
+      , playStyles_(playStyles)
+      , randPerstep_(randPerstep)
+      , encodingDuplicate_(encodingDuplicate)
       , playerEps_(batchsize_)
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(nullptr)
-      , playStyles_(playStyles)
-      , encodingDuplicate_(encodingDuplicate)
-      , randPerstep_(randPerstep)
       , r2d2Buffer_(nullptr) {
   }
 
@@ -177,9 +177,10 @@ class R2D2Actor {
   std::shared_ptr<rela::BatchRunner> classifier_;
   std::mt19937 rng_;
   const int numPlayer_;
-  const int playStyles_;
-  const bool randPerstep_;
+  
+  
   const int playerIdx_;
+  
   const std::vector<float> epsList_;
   const std::vector<float> tempList_;
   const bool vdn_;
@@ -189,15 +190,20 @@ class R2D2Actor {
   const bool trinary_;
   const bool isRef_;
   const int batchsize_;
+  const int playStyles_;
+  const bool randPerstep_;
+  const int encodingDuplicate_;
 
   std::vector<float> playerEps_;
   std::vector<float> playerTemp_;
   std::vector<std::vector<int>> colorPermutes_;
   std::vector<std::vector<int>> invColorPermutes_;
-
+  
   std::shared_ptr<rela::RNNPrioritizedReplay> replayBuffer_;
   std::unique_ptr<rela::R2D2Buffer> r2d2Buffer_;
+  std::vector<int> presentStyle_;
 
+  
   rela::TensorDict prevHidden_;
   rela::TensorDict hidden_;
 
@@ -215,7 +221,7 @@ class R2D2Actor {
   std::vector<int> privCardCount_;
   std::vector<hle::HanabiCardValue> sampledCards_;
   rela::FutureReply futTarget_;
-
+  
   int totalFict_ = 0;
   int successFict_ = 0;
   bool validFict_ = false;
