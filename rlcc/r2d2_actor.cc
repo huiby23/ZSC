@@ -136,7 +136,7 @@ void R2D2Actor::reset(const HanabiEnv& env) {
     r2d2Buffer_->init(hidden_);
   }
   if (playStyles_ > 0){
-    std::vector<int> presentStyle_(playStyles_*encodingDuplicate_, 0);
+    presentStyle_.assign(playStyles_*encodingDuplicate_, 0);
     srand((unsigned)time(NULL)); 
     int randomPosition = rand() % playStyles_;
     for (int i = 0; i < encodingDuplicate_; i++){
@@ -222,7 +222,7 @@ void R2D2Actor::observeBeforeAct(const HanabiEnv& env) {
     if (randPerstep_){
       std::fill(presentStyle_.begin(), presentStyle_.end(), 0);
       srand((unsigned)time(NULL)); 
-      randomPosition = rand() % playStyles_;
+      int randomPosition = rand() % playStyles_;
       for (int i = 0; i < encodingDuplicate_; i++){
         randomPosition += i*playStyles_;
         presentStyle_[randomPosition] = 1;
