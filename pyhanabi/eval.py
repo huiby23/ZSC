@@ -223,7 +223,7 @@ def evaluate(
                     )
                 else:
                     actor = hanalearn.R2D2Actor(
-                        runners[i], num_player, i, False, sad[i], hide_action[i]
+                        runners[i], num_player, i, False, sad[i], hide_action[i], 0, 1, False
                     )
                 actors.append(actor)
                 all_actors.append(actor)

@@ -8,6 +8,7 @@
 #include "rlcc/utils.h"
 #include <stdlib.h>
 #include <time.h> 
+#include <iostream>
 
 void addHid(rela::TensorDict& to, rela::TensorDict& hid) {
   for (auto& kv : hid) {
@@ -139,11 +140,10 @@ void R2D2Actor::reset(const HanabiEnv& env) {
     std::fill(presentStyle_.begin(), presentStyle_.end(), 0);
     srand((unsigned)time(NULL)); 
     int randomPosition = rand() % playStyles_;
-    for (int i = 0; i < encodingDuplicate_; i++){
-      randomPosition += i*playStyles_;
+    for (int i = 0; i < encodingDuplicate_-1; i++){
+      randomPosition += playStyles_;
       presentStyle_[randomPosition] = 1;
     }
-    
   }
 
   const auto& game = env.getHleGame();
@@ -223,7 +223,7 @@ void R2D2Actor::observeBeforeAct(const HanabiEnv& env) {
       std::fill(presentStyle_.begin(), presentStyle_.end(), 0);
       srand((unsigned)time(NULL)); 
       int randomPosition = rand() % playStyles_;
-      for (int i = 0; i < encodingDuplicate_; i++){
+      for (int i = 0; i < encodingDuplicate_-1; i++){
         randomPosition += playStyles_;
         presentStyle_[randomPosition] = 1;
       }
