@@ -380,6 +380,7 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
+                    device = args.act_device,
                 )
 
                 score_mp, perfect_mp, *_ = evaluate(
@@ -390,7 +391,8 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
-                    [None,agent_params]
+                    params = [None,agent_params],
+                    device = args.act_device,
                 )
 
                 score_pp, perfect_pp, *_ = evaluate(
@@ -401,7 +403,8 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
-                    [agent_params,agent_params]
+                    params = [agent_params,agent_params],
+                    device = args.act_device,
                 )
 
 
@@ -412,12 +415,11 @@ if __name__ == "__main__":
                 model_saved = saver.save(
                     None, agent.online_net.state_dict(), score_mp, False, force_save_name, agent_p.online_net.state_dict()
                 )
-                if epoch > 0 and epoch % 10 == 0:
-                    print(
-                        "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
-                        % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
-                    )
-                    print("==========")
+                print(
+                    "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
+                    % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
+                )
+                print("==========")
         elif args.training_type == 1: # train population first and then train main agents
             print('type 1 population based training')
             print('stage 1 training: train a population')
@@ -528,20 +530,20 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
-                    [agent_params,agent_params]
+                    params = [agent_params,agent_params],
+                    device = args.act_device,
                 )
 
                 force_save_name = "partner_model"
-                if epoch > 0 and epoch % 100 == 0:
+                if epoch > 0 and epoch % 50 == 0:
                     force_save_name = "partner_model_epoch%d" % epoch
                 model_saved = saver.save(
                     None, agent_p.online_net.state_dict(), score, force_save_name=force_save_name
                 )
-                if epoch > 0 and epoch % 10 == 0:
-                    print(
-                        "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
-                        % (epoch, score, perfect * 100, model_saved)
-                    )
+                print(
+                    "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
+                    % (epoch, score, perfect * 100, model_saved)
+                )
 
             print('stage 1 training complete, start stage 2 training')
             act_group = ActGroup(
@@ -670,6 +672,7 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
+                    device = args.act_device,
                 )
 
                 score_mp, perfect_mp, *_ = evaluate(
@@ -680,7 +683,8 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
-                    [None,agent_params]
+                    params = [None,agent_params],
+                    device = args.act_device,
                 )
 
                 force_save_name = None
@@ -689,12 +693,11 @@ if __name__ == "__main__":
                 model_saved = saver.save(
                     None, agent.online_net.state_dict(), score_mp, False, force_save_name, agent_p.online_net.state_dict()
                 )
-                if epoch > 0 and epoch % 10 == 0:
-                    print(
-                        "epoch %d, score_mm: %.4f, score_mp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f"
-                        % (epoch, score_mm, score_mp, perfect_mm * 100, perfect_mp * 100)
-                    )
-                    print("==========")
+                print(
+                    "epoch %d, score_mm: %.4f, score_mp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f"
+                    % (epoch, score_mm, score_mp, perfect_mm * 100, perfect_mp * 100)
+                )
+                print("==========")
         elif args.training_type == 2: # train population and main agents together
             print('type 2 population based training')
             act_group = ActGroup(
@@ -823,6 +826,7 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
+                    device = args.act_device,
                 )
 
                 score_mp, perfect_mp, *_ = evaluate(
@@ -833,7 +837,8 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
-                    [None,agent_params]
+                    params = [None,agent_params],
+                    device = args.act_device,
                 )
 
                 score_pp, perfect_pp, *_ = evaluate(
@@ -844,7 +849,8 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
-                    [agent_params,agent_params]
+                    params = [agent_params,agent_params],
+                    device = args.act_device,
                 )
 
                 force_save_name = None
@@ -853,12 +859,11 @@ if __name__ == "__main__":
                 model_saved = saver.save(
                     None, agent.online_net.state_dict(), score_mp, False, force_save_name, agent_p.online_net.state_dict()
                 )
-                if epoch > 0 and epoch % 10 == 0:
-                    print(
-                        "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
-                        % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
-                    )
-                    print("==========")
+                print(
+                    "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
+                    % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
+                )
+                print("==========")
 
     else:
 
@@ -1043,7 +1048,7 @@ if __name__ == "__main__":
             )
 
             force_save_name = None
-            if epoch > 0 and epoch % 100 == 0:
+            if epoch > 0 and epoch % 50 == 0:
                 force_save_name = "model_epoch%d" % epoch
             model_saved = saver.save(
                 None, agent.online_net.state_dict(), score, force_save_name=force_save_name
@@ -1062,6 +1067,7 @@ if __name__ == "__main__":
                     0,  # explore eps
                     args.sad,
                     args.hide_action,
+                    device = args.act_device,
                 )
                 print(f"clone bot score: {np.mean(score)}")
 
