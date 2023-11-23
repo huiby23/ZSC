@@ -224,7 +224,7 @@ void R2D2Actor::observeBeforeAct(const HanabiEnv& env) {
       srand((unsigned)time(NULL)); 
       int randomPosition = rand() % playStyles_;
       for (int i = 0; i < encodingDuplicate_; i++){
-        randomPosition += i*playStyles_;
+        randomPosition += playStyles_;
         presentStyle_[randomPosition] = 1;
       }
     }
