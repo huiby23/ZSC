@@ -180,7 +180,6 @@ if __name__ == "__main__":
             agent_playstyles = args.play_styles * args.encoding_duplicate
         else:
             agent_playstyles = 0
-
         agent = r2d2.R2D2Agent(
             (args.method == "vdn"),
             args.multi_step,
@@ -280,7 +279,8 @@ if __name__ == "__main__":
                 belief_model,
                 agent_p,
                 replay_buffer_p,
-                agent_params
+                agent_params,
+                split_train=False
             )
 
             context, threads = create_threads(
@@ -374,7 +374,6 @@ if __name__ == "__main__":
                 eval_seed = (9917 + epoch * 999999) % 7777777
                 eval_agent.load_state_dict(agent.state_dict())
                 eval_agent_p.load_state_dict(agent_p.state_dict())
-
                 score_mm, perfect_mm, *_ = evaluate(
                     [eval_agent, eval_agent],
                     1000,
@@ -698,8 +697,6 @@ if __name__ == "__main__":
                         % (epoch, score_mm, score_mp, perfect_mm * 100, perfect_mp * 100)
                     )
                     print("==========")
-
-
         elif args.training_type == 2: # train population and main agents together
             print('type 2 population based training')
             act_group = ActGroup(
@@ -725,7 +722,7 @@ if __name__ == "__main__":
                 agent_p,
                 replay_buffer_p,
                 agent_params,
-                True,
+                split_train=True,
             )
 
             context, threads = create_threads(
