@@ -153,8 +153,6 @@ if __name__ == "__main__":
         args.act_base_eps, args.act_eps_alpha, args.num_t
     )
     expected_eps = np.mean(explore_eps)
-    print("explore eps:", explore_eps)
-    print("avg explore eps:", np.mean(explore_eps))
 
     if args.boltzmann_act:
         boltzmann_beta = utils.generate_log_uniform(
