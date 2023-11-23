@@ -146,7 +146,6 @@ class LSTMNet(torch.jit.ScriptModule):
         self.out_dim = out_dim
         self.num_ff_layer = 1
         self.num_lstm_layer = num_lstm_layer
-
         ff_layers = [nn.Linear(self.priv_in_dim, self.hid_dim), nn.ReLU()]
         for i in range(1, self.num_ff_layer):
             ff_layers.append(nn.Linear(self.hid_dim, self.hid_dim))
@@ -190,7 +189,6 @@ class LSTMNet(torch.jit.ScriptModule):
             "c0": hid["c0"].transpose(0, 1).flatten(1, 2).contiguous(),
         }
         priv_s = priv_s.unsqueeze(0)
-
         x = self.net(priv_s)
         o, (h, c) = self.lstm(x, (hid["h0"], hid["c0"]))
         a = self.fc_a(o)

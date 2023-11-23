@@ -52,7 +52,12 @@ class R2D2Agent(torch.jit.ScriptModule):
     ):
         super().__init__()
         self.play_styles = play_styles
-        in_dim += play_styles
+        self.indim = in_dim
+        print('Init r2d2agent, indim:', in_dim, 'play styles:',play_styles)
+        in_dim_list = [in_dim[0],in_dim[1]+play_styles,in_dim[2]]
+
+        in_dim = in_dim_list
+
         if net == "ffwd":
             self.online_net = FFWDNet(in_dim, hid_dim, out_dim).to(device)
             self.target_net = FFWDNet(in_dim, hid_dim, out_dim).to(device)
@@ -112,7 +117,7 @@ class R2D2Agent(torch.jit.ScriptModule):
             self.gamma,
             self.eta,
             device,
-            self.online_net.in_dim,
+            self.indim,
             self.online_net.hid_dim,
             self.online_net.out_dim,
             self.net,
@@ -126,6 +131,7 @@ class R2D2Agent(torch.jit.ScriptModule):
             nhead=self.nhead,
             nlayer=self.nlayer,
             max_len=self.max_len,
+            play_styles=self.play_styles,
         )
         cloned.load_state_dict(self.state_dict())
         cloned.train(self.training)
@@ -175,7 +181,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         """
         priv_s = obs["priv_s"]
         if self.play_styles > 0:
-            priv_s = torch.cat(priv_s,obs["playStyle"],dim=-1)
+            priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
         publ_s = obs["publ_s"]
         legal_move = obs["legal_move"]
         if "eps" in obs:
@@ -258,7 +264,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         assert self.multi_step == 1
         priv_s = input_["priv_s"]
         if self.play_styles > 0:
-            priv_s = torch.cat(priv_s,input_["playStyle"],dim=-1)
+            priv_s = torch.cat((priv_s,input_["playStyle"]),dim=-1)
         publ_s = input_["publ_s"]
         legal_move = input_["legal_move"]
         act_hid = {
@@ -304,6 +310,8 @@ class R2D2Agent(torch.jit.ScriptModule):
             "publ_s": input_["publ_s"],
             "legal_move": input_["legal_move"],
         }
+        if "playStyle" in input_.keys():
+            obs["playStyle"] = input_["playStyle"]
         if self.boltzmann:
             obs["temperature"] = input_["temperature"]
 
@@ -337,7 +345,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         max_seq_len = obs["priv_s"].size(0)
         priv_s = obs["priv_s"]
         if self.play_styles > 0:
-            priv_s = torch.cat(priv_s,obs["playStyle"],dim=-1)
+            priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
         publ_s = obs["publ_s"]
         legal_move = obs["legal_move"]
         action = action["a"]
@@ -478,7 +486,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         max_seq_len = batch.obs["priv_s"].size(0)
         priv_s = batch.obs["priv_s"]
         if self.play_styles > 0:
-            priv_s = torch.cat(priv_s,batch.obs["playStyle"],dim=-1)
+            priv_s = torch.cat((priv_s,batch.obs["playStyle"]),dim=-1)
         publ_s = batch.obs["publ_s"]
         legal_move = batch.obs["legal_move"]
 

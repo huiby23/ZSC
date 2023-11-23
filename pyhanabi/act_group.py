@@ -92,6 +92,9 @@ class ActGroup:
                             multi_step,
                             max_len,
                             gamma,
+                            0,
+                            1,
+                            False,
                         )                   
                         actor_p = hanalearn.R2D2Actor(
                             self.model_runners_p[i % self.num_runners],
@@ -193,6 +196,9 @@ class ActGroup:
                             multi_step,
                             max_len,
                             gamma,
+                            0,
+                            1,
+                            False,
                         )                   
                         actor_p = hanalearn.R2D2Actor(
                             self.model_runners_p[i % self.num_runners],

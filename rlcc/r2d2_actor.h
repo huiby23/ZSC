@@ -55,7 +55,8 @@ class R2D2Actor {
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(std::move(replayBuffer))
-      , r2d2Buffer_(std::make_unique<rela::R2D2Buffer>(multiStep, seqLen, gamma)) {
+      , r2d2Buffer_(std::make_unique<rela::R2D2Buffer>(multiStep, seqLen, gamma)) 
+      , presentStyle_(playStyles*encodingDuplicate){
   }
 
   // simpler constructor for eval mode
@@ -89,7 +90,8 @@ class R2D2Actor {
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(nullptr)
-      , r2d2Buffer_(nullptr) {
+      , r2d2Buffer_(nullptr)
+      , presentStyle_(playStyles*encodingDuplicate) {
   }
 
   // simplest constructor for eval mode
@@ -122,7 +124,8 @@ class R2D2Actor {
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(nullptr)
-      , r2d2Buffer_(nullptr) {
+      , r2d2Buffer_(nullptr)
+      , presentStyle_(playStyles*encodingDuplicate) {
   }
 
   void setPartners(std::vector<std::shared_ptr<R2D2Actor>> partners) {
