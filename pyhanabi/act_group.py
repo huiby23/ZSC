@@ -168,12 +168,14 @@ class ActGroup:
                         )                        
 
                         seed += 1
+                        game_actors = []
                         game_actors = [actor_p1,actor_p2]
                         for k in range(num_player):
                             partners = game_actors[:]
                             partners[k] = None
                             game_actors[k].set_partners(partners)
                         thread_actors.append(game_actors)
+                    self.actors.append(thread_actors)
 
             else:
                 for i in range(num_thread):
