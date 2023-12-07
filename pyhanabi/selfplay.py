@@ -118,6 +118,7 @@ def parse_args():
     # 1 - partner vs partner training first, then main vs partner training 
     # 2 - one main agent and one partner agent, with each round randomly choosing main vs partner or partner vs partner
     parser.add_argument("--population_epoch", type=int, default=100) # used in type1 training
+    parser.add_argument("--mutual_info_ratio", type=float, default=0.1)    
 
     # training setting
     args = parser.parse_args()
@@ -213,7 +214,8 @@ if __name__ == "__main__":
             args.off_belief,
             adv_type=args.adv_type,
             adv_ratio=args.adv_ratio,
-            play_styles=agent_playstyles,
+            play_styles=args.play_styles,
+            encoding_duplicate=args.encoding_duplicate
         )
         agent_p.sync_target_with_online()  
 

@@ -49,14 +49,23 @@ class R2D2Agent(torch.jit.ScriptModule):
         adv_type=0,
         adv_ratio=0,
         play_styles=0,
+        encoding_duplicate=1,
     ):
         super().__init__()
         self.play_styles = play_styles
+        self.encoding_duplicate = encoding_duplicate
+        self.playstyle_size = play_styles * encoding_duplicate
         self.indim = in_dim
-        print('Init r2d2agent, indim:', in_dim, 'play styles:',play_styles)
-        in_dim_list = [in_dim[0],in_dim[1]+play_styles,in_dim[2]]
+        print('Init r2d2agent, indim:', in_dim, 'playstyle_size:',self.playstyle_size)
+        in_dim_list = [in_dim[0],in_dim[1]+self.playstyle_size,in_dim[2]]
 
         in_dim = in_dim_list
+
+        if self.play_styles > 0:
+            # generate tensors for backup 
+            self.playstyle_list = torch.zeros((play_styles,play_styles*encoding_duplicate)).to(device)
+            for i in range(play_styles):
+                self.playstyle_list[i,i::play_styles] = 1
 
         if net == "ffwd":
             self.online_net = FFWDNet(in_dim, hid_dim, out_dim).to(device)
@@ -132,6 +141,7 @@ class R2D2Agent(torch.jit.ScriptModule):
             nlayer=self.nlayer,
             max_len=self.max_len,
             play_styles=self.play_styles,
+            encoding_duplicate=self.encoding_duplicate,
         )
         cloned.load_state_dict(self.state_dict())
         cloned.train(self.training)
@@ -332,6 +342,36 @@ class R2D2Agent(torch.jit.ScriptModule):
         return {"priority": priority}
 
     @torch.jit.script_method
+    def mutual_information(
+        self,
+        obs: Dict[str, torch.Tensor],
+        action: Dict[str, torch.Tensor],
+    ) -> torch.Tensor:
+        priv_s = obs["priv_s"]
+        assert (self.play_styles > 0)
+        play_style = obs["playStyle"]
+        expand_playstyle = play_style.unsqueeze(0).expand(self.playstyle_size+1,*play_style.shape)
+        for idx in range(self.play_styles):
+            expand_playstyle[idx+1,...] = self.playstyle_list[idx,...].expand(*play_style.shape)
+        priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
+        legal_move = obs["legal_move"]
+        action = action["a"]
+
+        expand_priv_s = priv_s.unsqueeze(0).expand(self.playstyle_size+1,*priv_s.shape)
+        expand_legal_move = legal_move.unsqueeze(0).expand(self.playstyle_size+1,*legal_move.shape)
+        expand_action = action.unsqueeze(0).expand(self.playstyle_size+1,*action.shape)
+        expand_obsinput = torch.cat((expand_priv_s,expand_playstyle),-1)
+
+        total_p_vals = self.online_net.calculate_p(expand_obsinput,expand_legal_move,expand_action)
+
+        target_p_vals = total_p_vals[0,...]
+        res_p_vals = torch.mean(total_p_vals[1:,...],dim=0)
+        mutual_info = torch.mean(torch.log(target_p_vals/res_p_vals))
+        # this only works because the trajectories are padded,
+        # i.e. no terminal in the middle
+        return mutual_info
+
+    @torch.jit.script_method
     def td_error(
         self,
         obs: Dict[str, torch.Tensor],
@@ -437,7 +477,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         agg_priority = self.eta * p_max + (1.0 - self.eta) * p_mean
         return agg_priority
 
-    def loss(self, batch, aux_weight, stat):
+    def loss(self, batch, aux_weight, stat, mutual_info_weight=0):
         err, lstm_o, online_q = self.td_error(
             batch.obs,
             batch.h0,
@@ -479,7 +519,9 @@ class R2D2Agent(torch.jit.ScriptModule):
                 stat,
             )
             loss = rl_loss + aux_weight * pred
-
+        if mutual_info_weight > 0:
+            mutual_info = self.mutual_information(batch.obs,batch.action)
+            loss -= mutual_info*mutual_info_weight
         return loss, priority, online_q
 
     def behavior_clone_loss(self, online_q, batch, t, clone_bot, stat):
