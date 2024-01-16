@@ -49,7 +49,7 @@ class ActGroup:
     ):
         self.devices = devices.split(",")
         if (agent_params is None):
-            agent_params = {'play_styles':0, 'encoding_duplicate':1}
+            agent_params = {'play_styles':0, 'encoding_duplicate':1, "rand_perstep":0}
         if agent_p is not None:
             self.model_runners = []
             self.model_runners_p = []

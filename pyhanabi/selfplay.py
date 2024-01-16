@@ -1062,6 +1062,7 @@ if __name__ == "__main__":
                 0,  # explore eps
                 args.sad,
                 args.hide_action,
+                device = args.act_device,
             )
             dict_stats['score_mm'][epoch] = score
             with open(os.path.join(args.save_dir, 'train_log.pkl'), 'wb') as pickle_file:

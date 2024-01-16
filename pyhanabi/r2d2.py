@@ -341,7 +341,6 @@ class R2D2Agent(torch.jit.ScriptModule):
         priority = self.aggregate_priority(priority, seq_len).detach().cpu()
         return {"priority": priority}
 
-    @torch.jit.script_method
     def mutual_information(
         self,
         obs: Dict[str, torch.Tensor],
@@ -356,7 +355,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
         legal_move = obs["legal_move"]
         action = action["a"]
-
+        
         expand_priv_s = priv_s.unsqueeze(0).expand(self.playstyle_size+1,*priv_s.shape)
         expand_legal_move = legal_move.unsqueeze(0).expand(self.playstyle_size+1,*legal_move.shape)
         expand_action = action.unsqueeze(0).expand(self.playstyle_size+1,*action.shape)
