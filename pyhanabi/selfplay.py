@@ -14,7 +14,7 @@ import os
 import sys
 import argparse
 import pprint
-
+import pickle
 import numpy as np
 import torch
 from torch import nn
@@ -174,6 +174,11 @@ if __name__ == "__main__":
         args.max_len,
     )
 
+    dict_stats = {}
+    dict_stats['score_mm'] = np.zeros(args.num_epoch)
+    dict_stats['score_mp'] = np.zeros(args.num_epoch)
+    dict_stats['score_pp'] = np.zeros(args.num_epoch)
+
     if args.no_sharing:
         if args.play_styles > 0:
             agent_playstyles = args.play_styles * args.encoding_duplicate
@@ -255,7 +260,7 @@ if __name__ == "__main__":
         print('Agent initialization complete. Disable parameter sharing.')
         agent_params = {'play_styles':args.play_styles, 'encoding_duplicate':args.encoding_duplicate, 'rand_perstep':args.rand_perstep}
 
-        if args.training_type == 0: # regular training: 
+        if args.training_type == 0: # regular training, only main and regular partner: 
             print('type 0 population based training')
             act_group = ActGroup(
                 args.act_device,
@@ -369,7 +374,6 @@ if __name__ == "__main__":
                     print("EPOCH: %d" % epoch)
                     tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
                     stopwatch.summary()
-                    stat.summary(epoch)
 
                 eval_seed = (9917 + epoch * 999999) % 7777777
                 eval_agent.load_state_dict(agent.state_dict())
@@ -409,6 +413,12 @@ if __name__ == "__main__":
                     device = args.act_device,
                 )
 
+                dict_stats['score_mm'][epoch] = score_mm
+                dict_stats['score_mp'][epoch] = score_mp
+                dict_stats['score_pp'][epoch] = score_pp
+
+                with open(os.path.join(args.save_dir, 'train_log.pkl'), 'wb') as pickle_file:
+                    pickle.dump(dict_stats, pickle_file)
 
 
                 force_save_name = None
@@ -520,7 +530,6 @@ if __name__ == "__main__":
                     print("EPOCH: %d" % epoch)
                     tachometer.lap(replay_buffer_p, args.epoch_len * args.batchsize, count_factor)
                     stopwatch.summary()
-                    stat.summary(epoch)
 
                 eval_seed = (9917 + epoch * 999999) % 7777777
                 eval_agent_p.load_state_dict(agent_p.state_dict())
@@ -535,7 +544,9 @@ if __name__ == "__main__":
                     params = [agent_params,agent_params],
                     device = args.act_device,
                 )
-
+                dict_stats['score_pp'][epoch] = score
+                with open(os.path.join(args.save_dir, 'train_log.pkl'), 'wb') as pickle_file:
+                    pickle.dump(dict_stats, pickle_file)
                 force_save_name = "partner_model"
                 if epoch > 0 and epoch % 50 == 0:
                     force_save_name = "partner_model_epoch%d" % epoch
@@ -597,7 +608,7 @@ if __name__ == "__main__":
             tachometer = utils.Tachometer()
             stopwatch = common_utils.Stopwatch()
 
-            for epoch in range(args.num_epoch):
+            for epoch in range(args.population_epoch, args.num_epoch):
                 print("beginning of epoch: ", epoch)
                 print(common_utils.get_mem_usage())
                 tachometer.start()
@@ -660,7 +671,6 @@ if __name__ == "__main__":
                     print("EPOCH: %d" % epoch)
                     tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
                     stopwatch.summary()
-                    stat.summary(epoch)
 
                 eval_seed = (9917 + epoch * 999999) % 7777777
                 eval_agent.load_state_dict(agent.state_dict())
@@ -688,7 +698,10 @@ if __name__ == "__main__":
                     params = [None,agent_params],
                     device = args.act_device,
                 )
-
+                dict_stats['score_mm'][epoch] = score_mm
+                dict_stats['score_mp'][epoch] = score_mp
+                with open(os.path.join(args.save_dir, 'train_log.pkl'), 'wb') as pickle_file:
+                    pickle.dump(dict_stats, pickle_file)
                 force_save_name = None
                 if epoch > 0 and epoch % 50 == 0:
                     force_save_name = "model_epoch%d" % epoch
@@ -814,7 +827,6 @@ if __name__ == "__main__":
                     print("EPOCH: %d" % epoch)
                     tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
                     stopwatch.summary()
-                    stat.summary(epoch)
 
                 eval_seed = (9917 + epoch * 999999) % 7777777
                 eval_agent.load_state_dict(agent.state_dict())
@@ -854,7 +866,11 @@ if __name__ == "__main__":
                     params = [agent_params,agent_params],
                     device = args.act_device,
                 )
-
+                dict_stats['score_mm'][epoch] = score_mm
+                dict_stats['score_mp'][epoch] = score_mp
+                dict_stats['score_pp'][epoch] = score_pp
+                with open(os.path.join(args.save_dir, 'train_log.pkl'), 'wb') as pickle_file:
+                    pickle.dump(dict_stats, pickle_file)
                 force_save_name = None
                 if epoch > 0 and epoch % 50 == 0:
                     force_save_name = "model_epoch%d" % epoch
@@ -1035,7 +1051,6 @@ if __name__ == "__main__":
             print("EPOCH: %d" % epoch)
             tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
             stopwatch.summary()
-            stat.summary(epoch)
 
             eval_seed = (9917 + epoch * 999999) % 7777777
             eval_agent.load_state_dict(agent.state_dict())
@@ -1048,7 +1063,9 @@ if __name__ == "__main__":
                 args.sad,
                 args.hide_action,
             )
-
+            dict_stats['score_mm'][epoch] = score
+            with open(os.path.join(args.save_dir, 'train_log.pkl'), 'wb') as pickle_file:
+                pickle.dump(dict_stats, pickle_file)
             force_save_name = None
             if epoch > 0 and epoch % 50 == 0:
                 force_save_name = "model_epoch%d" % epoch
