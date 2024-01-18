@@ -431,15 +431,6 @@ void R2D2Actor::observeAfterAct(const HanabiEnv& env) {
   if (terminated) {
     lastEpisode_ = r2d2Buffer_->popTransition();
     auto input = lastEpisode_.toDict();
-    if (!adversary_){
-      futPriority_ = runner_->call("compute_priority", input);
-    } else {
-      if (is_xp_){
-        futPriority_ = runner_->call("compute_priority_xp", input);
-      } else {
-        futPriority_ = runner_->call("compute_priority_sp", input);
-      }      
-    }
-    
+    futPriority_ = runner_->call("compute_priority", input);
   }
 }

@@ -80,25 +80,6 @@ PYBIND11_MODULE(hanalearn, m) {
            // if replay buffer is None, then all params below are not used
            int,       // multiStep,
            int,       // seqLen,
-           float,     // gamma
-           bool,
-           bool>())  
-      .def(py::init<
-           std::shared_ptr<rela::BatchRunner>,  // runner,
-           int,                                 // seed,
-           int,  // numPlayer,                       // total number os players
-           int,  // playerIdx,                       // player idx for this player
-           const std::vector<float>&,  // epsList,   // list of eps to sample from
-           const std::vector<float>&,  // tempList,  // list of temp to sample from
-           bool,                       // vdn,
-           bool,                       // sad,
-           bool,                       // shuffleColor,
-           bool,                       //  hideAction,
-           bool,                       // trinary,  // trinary aux task or full aux
-           std::shared_ptr<rela::RNNPrioritizedReplay>,  //  replayBuffer,
-           // if replay buffer is None, then all params below are not used
-           int,       // multiStep,
-           int,       // seqLen,
            float>())  // gamma
       .def(py::init<
            std::shared_ptr<rela::BatchRunner>,

@@ -119,23 +119,18 @@ if __name__ == "__main__":
     torch.backends.cudnn.benchmark = True
     args = parse_args()
 
-    save_dir_adv = args.save_dir+"_adv"
-
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
-        os.makedirs(save_dir_adv)
 
     logger_path = os.path.join(args.save_dir, "train.log")
     sys.stdout = common_utils.Logger(logger_path)
     saver = common_utils.TopkSaver(args.save_dir, 5)
-    adv_saver = common_utils.TopkSaver(save_dir_adv, 5)
 
     common_utils.set_all_seeds(args.seed)
     pprint.pprint(vars(args))
 
     adv_agent = None
-    xp_replay_buffer = None 
-    sp_replay_buffer = None 
+    replay_buffer_adv = None 
     if args.method == "vdn":
         args.batchsize = int(np.round(args.batchsize / args.num_player))
         args.replay_buffer_size //= args.num_player
@@ -234,20 +229,11 @@ if __name__ == "__main__":
     if args.adversarial_train:
         assert args.method == "iql"
         adv_agent = adv_agent.to(args.train_device)
-        xp_optim = torch.optim.Adam(adv_agent.online_net_xp.parameters(), lr=args.lr, eps=args.eps)
-        sp_optim = torch.optim.Adam(adv_agent.online_net_sp.parameters(), lr=args.lr, eps=args.eps)
+        optim = torch.optim.Adam(adv_agent.online_net.parameters(), lr=args.lr, eps=args.eps)
         print(adv_agent)
         eval_adv_agent = adv_agent.clone(args.train_device, {"vdn": False, "boltzmann_act": False})        
 
-        xp_replay_buffer = rela.RNNPrioritizedReplay(
-        args.replay_buffer_size,
-        args.seed,
-        args.priority_exponent,
-        args.priority_weight,
-        args.prefetch,
-        )
-
-        sp_replay_buffer = rela.RNNPrioritizedReplay(
+        replay_buffer_adv = rela.RNNPrioritizedReplay(
         args.replay_buffer_size,
         args.seed,
         args.priority_exponent,
@@ -276,6 +262,7 @@ if __name__ == "__main__":
 
     act_group = ActGroup(
         args.act_device,
+        replay_buffer_adv,
         adv_agent,
         agent,
         args.seed,
@@ -290,8 +277,6 @@ if __name__ == "__main__":
         args.hide_action,
         True,  # trinary, 3 bits for aux task
         replay_buffer,
-        xp_replay_buffer,
-        sp_replay_buffer,
         args.multi_step,
         args.max_len,
         args.gamma,
@@ -322,197 +307,87 @@ if __name__ == "__main__":
     stat = common_utils.MultiCounter(args.save_dir)
     tachometer = utils.Tachometer()
     stopwatch = common_utils.Stopwatch()
-    if args.adversarial_train:
-        print("Enable adversarial training")
-        for epoch in range(args.num_epoch):
-            print("beginning of epoch: ", epoch)
-            print(common_utils.get_mem_usage())
-            tachometer.start()
-            stat.reset()
-            stopwatch.reset()
 
-            for batch_idx in range(args.epoch_len):
-                num_update = batch_idx + epoch * args.epoch_len
-                if num_update % args.num_update_between_sync == 0:
-                    agent.sync_target_with_online()
-                if num_update % args.actor_sync_freq == 0:
-                    act_group.update_model(agent)
-                    act_group.update_adv_model(adv_agent)
+    for epoch in range(args.num_epoch):
+        print("beginning of epoch: ", epoch)
+        print(common_utils.get_mem_usage())
+        tachometer.start()
+        stat.reset()
+        stopwatch.reset()
 
-                torch.cuda.synchronize()
-                stopwatch.time("sync and updating")
+        for batch_idx in range(args.epoch_len):
+            num_update = batch_idx + epoch * args.epoch_len
+            if num_update % args.num_update_between_sync == 0:
+                agent.sync_target_with_online()
+            if num_update % args.actor_sync_freq == 0:
+                act_group.update_model(agent)
 
-                batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
-                batch_xp, weight_xp = xp_replay_buffer.sample(args.batchsize, args.train_device)
-                batch_sp, weight_sp = sp_replay_buffer.sample(args.batchsize, args.train_device)
-                stopwatch.time("sample data")
+            torch.cuda.synchronize()
+            stopwatch.time("sync and updating")
 
-                loss, priority, online_q = agent.loss(batch, args.aux_weight, stat)
-                loss = (loss * weight).mean()
-                loss.backward()
+            batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
+            stopwatch.time("sample data")
 
-                q_xp_loss, xp_priority, _ = adv_agent.q_xp_loss(batch_xp, args.aux_weight, stat)
-                q_xp_loss = (q_xp_loss * weight_xp).mean()
-                q_xp_loss.backward()
-
-                q_sp_loss, sp_priority, _ = adv_agent.q_sp_loss(batch_sp, args.aux_weight, stat)
-                q_sp_loss = (q_sp_loss * weight_sp).mean()
-                q_sp_loss.backward()
-
-                torch.cuda.synchronize()
-                stopwatch.time("forward & backward")
-
-                g_norm = torch.nn.utils.clip_grad_norm_(
-                    agent.online_net.parameters(), args.grad_clip
+            loss, priority, online_q = agent.loss(batch, args.aux_weight, stat)
+            if clone_bot is not None and args.clone_weight > 0:
+                bc_loss = agent.behavior_clone_loss(
+                    online_q, batch, args.clone_t, clone_bot, stat
                 )
-                optim.step()
-                optim.zero_grad()
+                loss = loss + bc_loss * args.clone_weight
+            loss = (loss * weight).mean()
+            loss.backward()
 
+            torch.cuda.synchronize()
+            stopwatch.time("forward & backward")
 
-                xp_g_norm = torch.nn.utils.clip_grad_norm_(
-                    adv_agent.online_net_xp.parameters(), args.grad_clip
-                )
-                xp_optim.step()
-                xp_optim.zero_grad()
-
-
-                sp_g_norm = torch.nn.utils.clip_grad_norm_(
-                    adv_agent.online_net_sp.parameters(), args.grad_clip
-                )
-                sp_optim.step()
-                sp_optim.zero_grad()
-
-
-                torch.cuda.synchronize()
-                stopwatch.time("update model")
-
-                replay_buffer.update_priority(priority)
-                xp_replay_buffer.update_priority(xp_priority)
-                sp_replay_buffer.update_priority(sp_priority)
-                stopwatch.time("updating priority")
-
-                stat["loss"].feed(loss.detach().item())
-                stat["xp_loss"].feed(q_xp_loss.detach().item())
-                stat["sp_loss"].feed(q_sp_loss.detach().item())
-                stat["grad_norm"].feed(g_norm)
-                stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
-
-            count_factor = args.num_player if args.method == "vdn" else 1
-            print("EPOCH: %d" % epoch)
-            tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
-            stopwatch.summary()
-            stat.summary(epoch)
-
-            eval_seed = (9917 + epoch * 999999) % 7777777
-            eval_agent.load_state_dict(agent.state_dict())
-            eval_adv_agent.load_state_dict(adv_agent.state_dict())
-
-            
-            xp_score, xp_perfect, *_ = evaluate(
-                [eval_agent, eval_adv_agent],
-                1000,
-                eval_seed,
-                args.eval_bomb,
-                0,  # explore eps
-                args.sad,
-                args.hide_action,
-                device = args.train_device,
+            g_norm = torch.nn.utils.clip_grad_norm_(
+                agent.online_net.parameters(), args.grad_clip
             )
+            optim.step()
+            optim.zero_grad()
 
-            force_save_name = None
-            if epoch > 0 and epoch % 100 == 0:
-                force_save_name = "model_epoch%d" % epoch
-            model_saved = saver.save(
-                None, agent.online_net.state_dict(), xp_score, force_save_name=force_save_name
-            )
-            print(
-                "epoch %d, xp eval score: %.4f, perfect: %.2f, model saved: %s"
-                % (epoch, xp_score, xp_perfect * 100, model_saved)
-            )
+            torch.cuda.synchronize()
+            stopwatch.time("update model")
 
-            sp_score, sp_perfect, *_ = evaluate(
-                [eval_adv_agent, eval_adv_agent],
-                1000,
-                eval_seed,
-                args.eval_bomb,
-                0,  # explore eps
-                args.sad,
-                args.hide_action,
-                device = args.train_device,
-            )
+            replay_buffer.update_priority(priority)
+            stopwatch.time("updating priority")
 
-            adv_model_saved = adv_saver.save_adv(
-                None, adv_agent.online_net_xp.state_dict(), adv_agent.online_net_sp.state_dict(), xp_score, force_save_name=None
-            )
-            print(
-                "epoch %d, sp eval score: %.4f, perfect: %.2f, model saved: %s"
-                % (epoch, sp_score, sp_perfect * 100, adv_model_saved)
-            )
+            stat["loss"].feed(loss.detach().item())
+            stat["grad_norm"].feed(g_norm)
+            stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
 
-            print("==========")        
-    else:
-        for epoch in range(args.num_epoch):
-            print("beginning of epoch: ", epoch)
-            print(common_utils.get_mem_usage())
-            tachometer.start()
-            stat.reset()
-            stopwatch.reset()
+        count_factor = args.num_player if args.method == "vdn" else 1
+        print("EPOCH: %d" % epoch)
+        tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
+        stopwatch.summary()
+        stat.summary(epoch)
 
-            for batch_idx in range(args.epoch_len):
-                num_update = batch_idx + epoch * args.epoch_len
-                if num_update % args.num_update_between_sync == 0:
-                    agent.sync_target_with_online()
-                if num_update % args.actor_sync_freq == 0:
-                    act_group.update_model(agent)
+        eval_seed = (9917 + epoch * 999999) % 7777777
+        eval_agent.load_state_dict(agent.state_dict())
+        score, perfect, *_ = evaluate(
+            [eval_agent for _ in range(args.num_player)],
+            1000,
+            eval_seed,
+            args.eval_bomb,
+            0,  # explore eps
+            args.sad,
+            args.hide_action,
+        )
 
-                torch.cuda.synchronize()
-                stopwatch.time("sync and updating")
+        force_save_name = None
+        if epoch > 0 and epoch % 100 == 0:
+            force_save_name = "model_epoch%d" % epoch
+        model_saved = saver.save(
+            None, agent.online_net.state_dict(), score, force_save_name=force_save_name
+        )
+        print(
+            "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
+            % (epoch, score, perfect * 100, model_saved)
+        )
 
-                batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
-                stopwatch.time("sample data")
-
-                loss, priority, online_q = agent.loss(batch, args.aux_weight, stat)
-                if clone_bot is not None and args.clone_weight > 0:
-                    bc_loss = agent.behavior_clone_loss(
-                        online_q, batch, args.clone_t, clone_bot, stat
-                    )
-                    loss = loss + bc_loss * args.clone_weight
-                loss = (loss * weight).mean()
-                loss.backward()
-
-                torch.cuda.synchronize()
-                stopwatch.time("forward & backward")
-
-                g_norm = torch.nn.utils.clip_grad_norm_(
-                    agent.online_net.parameters(), args.grad_clip
-                )
-                optim.step()
-                optim.zero_grad()
-
-                torch.cuda.synchronize()
-                stopwatch.time("update model")
-
-                replay_buffer.update_priority(priority)
-                stopwatch.time("updating priority")
-
-                stat["loss"].feed(loss.detach().item())
-                stat["grad_norm"].feed(g_norm)
-                stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
-
-            count_factor = args.num_player if args.method == "vdn" else 1
-            print("EPOCH: %d" % epoch)
-            tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
-            tachometer.lap(xp_replay_buffer, args.epoch_len * args.batchsize, count_factor)
-            tachometer.lap(sp_replay_buffer, args.epoch_len * args.batchsize, count_factor)
-            stopwatch.summary()
-            stat.summary(epoch)
-            
-
-
-            eval_seed = (9917 + epoch * 999999) % 7777777
-            eval_agent.load_state_dict(agent.state_dict())
+        if clone_bot is not None:
             score, perfect, *_ = evaluate(
-                [eval_agent for _ in range(args.num_player)],
+                [clone_bot] + [eval_agent for _ in range(args.num_player - 1)],
                 1000,
                 eval_seed,
                 args.eval_bomb,
@@ -520,35 +395,13 @@ if __name__ == "__main__":
                 args.sad,
                 args.hide_action,
             )
+            print(f"clone bot score: {np.mean(score)}")
 
-            force_save_name = None
-            if epoch > 0 and epoch % 100 == 0:
-                force_save_name = "model_epoch%d" % epoch
-            model_saved = saver.save(
-                None, agent.online_net.state_dict(), score, force_save_name=force_save_name
-            )
+        if args.off_belief:
+            actors = common_utils.flatten(act_group.actors)
+            success_fict = [actor.get_success_fict_rate() for actor in actors]
             print(
-                "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
-                % (epoch, score, perfect * 100, model_saved)
+                "epoch %d, success rate for sampling ficticious state: %.2f%%"
+                % (epoch, 100 * np.mean(success_fict))
             )
-
-            if clone_bot is not None:
-                score, perfect, *_ = evaluate(
-                    [clone_bot] + [eval_agent for _ in range(args.num_player - 1)],
-                    1000,
-                    eval_seed,
-                    args.eval_bomb,
-                    0,  # explore eps
-                    args.sad,
-                    args.hide_action,
-                )
-                print(f"clone bot score: {np.mean(score)}")
-
-            if args.off_belief:
-                actors = common_utils.flatten(act_group.actors)
-                success_fict = [actor.get_success_fict_rate() for actor in actors]
-                print(
-                    "epoch %d, success rate for sampling ficticious state: %.2f%%"
-                    % (epoch, 100 * np.mean(success_fict))
-                )
-            print("==========")
+        print("==========")
