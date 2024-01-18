@@ -895,14 +895,9 @@ class R2D2AdvAgent(torch.jit.ScriptModule):
         # i.e. no terminal in the middle
         greedy_a, out_q = self.policy_net(priv_s, publ_s, legal_move, hid)
 
-        online_qa, best_a, online_q, lstm_o = self.online_net_xp(
+        online_qa, desired_a, online_q, lstm_o = self.online_net_xp(
             priv_s, publ_s, legal_move, action, hid
         )
-
-        legal_q = (1 + online_q - online_q.min()) * legal_move
-        q_mask = legal_q != legal_q.max(2,keepdim=True)[0]
-        final_q = torch.mul(q_mask, legal_q)
-        desired_a = final_q.argmax(2).detach()
 
         target_qa, _, target_q, _ = self.target_net_xp(
             priv_s, publ_s, legal_move, greedy_a, hid
