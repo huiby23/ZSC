@@ -32,7 +32,7 @@ def evaluate(
     *,
     num_thread=10,
     max_len=80,
-    device="cuda:0",
+    device="cuda:7",
 ):
     """
     evaluate agents as long as they have a "act" function

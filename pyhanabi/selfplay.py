@@ -42,7 +42,7 @@ def parse_args():
     parser.add_argument("--off_belief", type=int, default=0)
     parser.add_argument("--belief_model", type=str, default="None")
     parser.add_argument("--num_fict_sample", type=int, default=10)
-    parser.add_argument("--belief_device", type=str, default="cuda:0")
+    parser.add_argument("--belief_device", type=str, default="cuda:1")
 
     parser.add_argument("--load_model", type=str, default="")
     parser.add_argument("--clone_bot", type=str, default="", help="behavior clone loss")
@@ -70,7 +70,7 @@ def parse_args():
         "--net", type=str, default="publ-lstm", help="publ-lstm/ffwd/lstm"
     )
 
-    parser.add_argument("--train_device", type=str, default="cuda:0")
+    parser.add_argument("--train_device", type=str, default="cuda:7")
     parser.add_argument("--batchsize", type=int, default=128)
     parser.add_argument("--num_epoch", type=int, default=5000)
     parser.add_argument("--epoch_len", type=int, default=1000)
@@ -98,7 +98,7 @@ def parse_args():
     # actor setting
     parser.add_argument("--act_base_eps", type=float, default=0.1)
     parser.add_argument("--act_eps_alpha", type=float, default=7)
-    parser.add_argument("--act_device", type=str, default="cuda:0")
+    parser.add_argument("--act_device", type=str, default="cuda:1")
     parser.add_argument("--actor_sync_freq", type=int, default=10)
 
     # adversarial training setting
