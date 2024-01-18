@@ -196,7 +196,7 @@ if __name__ == "__main__":
     parser.add_argument("--prefetch", type=int, default=3)
     parser.add_argument("--seed", type=int, default=1)
     # network config
-    parser.add_argument("--device", type=str, default="cuda:7")
+    parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--net", type=str, default="lstm")
     parser.add_argument("--rnn_hid_size", type=int, default=512)
     parser.add_argument("--lstm_layers", type=int, default=1)

@@ -61,7 +61,6 @@ def parse_args():
 
     # optimization/training settings
     parser.add_argument("--lr", type=float, default=6.25e-5, help="Learning rate")
-    parser.add_argument("--actor_lr", type=float, default=3e-4, help="Learning rate for policy net")
     parser.add_argument("--eps", type=float, default=1.5e-5, help="Adam epsilon")
     parser.add_argument("--grad_clip", type=float, default=5, help="max grad norm")
     parser.add_argument("--num_lstm_layer", type=int, default=2)
@@ -70,7 +69,7 @@ def parse_args():
         "--net", type=str, default="publ-lstm", help="publ-lstm/ffwd/lstm"
     )
 
-    parser.add_argument("--train_device", type=str, default="cuda:7")
+    parser.add_argument("--train_device", type=str, default="cuda:0")
     parser.add_argument("--batchsize", type=int, default=128)
     parser.add_argument("--num_epoch", type=int, default=5000)
     parser.add_argument("--epoch_len", type=int, default=1000)
@@ -241,7 +240,7 @@ if __name__ == "__main__":
         adv_agent = adv_agent.to(args.train_device)
         xp_optim = torch.optim.Adam(adv_agent.online_net_xp.parameters(), lr=args.lr, eps=args.eps)
         sp_optim = torch.optim.Adam(adv_agent.online_net_sp.parameters(), lr=args.lr, eps=args.eps)
-        plc_optim = torch.optim.Adam(adv_agent.policy_net.parameters(), lr=args.actor_lr, eps=args.eps)
+        plc_optim = torch.optim.Adam(adv_agent.policy_net.parameters(), lr=args.lr, eps=args.eps)
         print(adv_agent)
         eval_adv_agent = adv_agent.clone(args.train_device, {"vdn": False, "boltzmann_act": False})        
 

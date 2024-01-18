@@ -52,12 +52,12 @@ def create_dataset_new(
             {
                 "vdn": True,
                 "boltzmann_act": False,
-                "device": "cuda:7",
+                "device": "cuda:0",
                 "uniform_priority": True,
                 "off_belief": False,
             },
         )
-        runner = rela.BatchRunner(agent, "cuda:7", 100, ["act", "compute_priority"])
+        runner = rela.BatchRunner(agent, "cuda:0", 100, ["act", "compute_priority"])
         runners = [runner]
         configs = [config]
     else:
@@ -66,7 +66,7 @@ def create_dataset_new(
         for w in weight_file:
             if w == "clone_bot":
                 wf, hide_action = model_zoo.model_zoo[w]
-                agent = utils.load_supervised_agent(wf, "cuda:7")
+                agent = utils.load_supervised_agent(wf, "cuda:0")
                 config = {
                     "hide_action": hide_action,
                     "num_player": 2,
@@ -77,14 +77,14 @@ def create_dataset_new(
                     {
                         "vdn": False,
                         "boltzmann_act": False,
-                        "device": "cuda:7",
+                        "device": "cuda:0",
                         "uniform_priority": True,
                         "off_belief": False,
                     },
                 )
 
             configs.append(config)
-            runner = rela.BatchRunner(agent, "cuda:7", 100, ["act", "compute_priority"])
+            runner = rela.BatchRunner(agent, "cuda:0", 100, ["act", "compute_priority"])
             runners.append(runner)
 
     if write_replay is None:
@@ -146,7 +146,7 @@ def create_dataset_new(
 
     # remove extra data
     for _ in range(2):
-        data, unif = replay_buffer.sample(10, "cuda:7")
+        data, unif = replay_buffer.sample(10, "cuda:0")
         replay_buffer.update_priority(unif.detach().cpu())
         time.sleep(0.2)
 
@@ -184,12 +184,12 @@ def create_dataset(
         {
             "vdn": vdn,
             "boltzmann_act": False,
-            "device": "cuda:7",
+            "device": "cuda:0",
             "uniform_priority": True,
             "off_belief": False,
         },
     )
-    runner = rela.BatchRunner(agent, "cuda:7", 100, ["act", "compute_priority"])
+    runner = rela.BatchRunner(agent, "cuda:0", 100, ["act", "compute_priority"])
 
     if weight_file_2 is not None:
         agent_2, _ = utils.load_agent(
@@ -197,12 +197,12 @@ def create_dataset(
             {
                 "vdn": vdn,
                 "boltzmann_act": False,
-                "device": "cuda:7",
+                "device": "cuda:0",
                 "uniform_priority": True,
                 "off_belief": False,
             },
         )
-        runner_2 = rela.BatchRunner(agent_2, "cuda:7", 100, ["act", "compute_priority"])
+        runner_2 = rela.BatchRunner(agent_2, "cuda:0", 100, ["act", "compute_priority"])
 
     replay_buffer = rela.RNNPrioritizedReplay(
         num_game,  # args.dataset_size,
@@ -283,7 +283,7 @@ def create_dataset(
 
     # remove extra data
     for _ in range(2):
-        data, unif = replay_buffer.sample(10, "cuda:7")
+        data, unif = replay_buffer.sample(10, "cuda:0")
         replay_buffer.update_priority(unif.detach().cpu())
         time.sleep(0.2)
 

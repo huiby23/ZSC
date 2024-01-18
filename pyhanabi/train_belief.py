@@ -35,7 +35,7 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=10001)
     parser.add_argument("--hid_dim", type=int, default=512)
     parser.add_argument("--fc_only", type=int, default=0)
-    parser.add_argument("--train_device", type=str, default="cuda:7")
+    parser.add_argument("--train_device", type=str, default="cuda:0")
     parser.add_argument("--act_device", type=str, default="cuda:1")
 
     # load policy config
