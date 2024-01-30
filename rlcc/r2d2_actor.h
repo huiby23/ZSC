@@ -32,7 +32,6 @@ class R2D2Actor {
       int seqLen,
       float gamma,
       int playStyles = 0,
-      int encodingDuplicate = 1,
       bool randPerstep = false)
       : runner_(std::move(runner))
       , rng_(seed)
@@ -49,14 +48,12 @@ class R2D2Actor {
       , batchsize_(vdn_ ? numPlayer_ : 1)
       , playStyles_(playStyles)
       , randPerstep_(randPerstep)
-      , encodingDuplicate_(encodingDuplicate)
       , playerEps_(batchsize_)
       , playerTemp_(batchsize_)
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(std::move(replayBuffer))
-      , r2d2Buffer_(std::make_unique<rela::R2D2Buffer>(multiStep, seqLen, gamma)) 
-      , presentStyle_(playStyles*encodingDuplicate){
+      , r2d2Buffer_(std::make_unique<rela::R2D2Buffer>(multiStep, seqLen, gamma)){
   }
 
   // simpler constructor for eval mode
@@ -69,7 +66,6 @@ class R2D2Actor {
       bool hideAction,
       bool isRef,
       int playStyles = 0,
-      int encodingDuplicate = 1,
       bool randPerstep = false)
       : runner_(std::move(runner))
       , rng_(1)  // not used in eval mode
@@ -85,13 +81,11 @@ class R2D2Actor {
       , batchsize_(vdn_ ? numPlayer_ : 1)
       , playStyles_(playStyles)
       , randPerstep_(randPerstep)
-      , encodingDuplicate_(encodingDuplicate)
       , playerEps_(batchsize_)
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(nullptr)
-      , r2d2Buffer_(nullptr)
-      , presentStyle_(playStyles*encodingDuplicate) {
+      , r2d2Buffer_(nullptr){
   }
 
   // simplest constructor for eval mode
@@ -103,7 +97,6 @@ class R2D2Actor {
       bool sad,
       bool hideAction,
       int playStyles = 0,
-      int encodingDuplicate = 1,
       bool randPerstep = false)
       : runner_(std::move(runner))
       , rng_(1)  // not used in eval mode
@@ -119,13 +112,11 @@ class R2D2Actor {
       , batchsize_(vdn_ ? numPlayer_ : 1)
       , playStyles_(playStyles)
       , randPerstep_(randPerstep)
-      , encodingDuplicate_(encodingDuplicate)
       , playerEps_(batchsize_)
       , colorPermutes_(batchsize_)
       , invColorPermutes_(batchsize_)
       , replayBuffer_(nullptr)
-      , r2d2Buffer_(nullptr)
-      , presentStyle_(playStyles*encodingDuplicate) {
+      , r2d2Buffer_(nullptr){
   }
 
   void setPartners(std::vector<std::shared_ptr<R2D2Actor>> partners) {
@@ -195,7 +186,6 @@ class R2D2Actor {
   const int batchsize_;
   const int playStyles_;
   const bool randPerstep_;
-  const int encodingDuplicate_;
 
   std::vector<float> playerEps_;
   std::vector<float> playerTemp_;
@@ -204,7 +194,7 @@ class R2D2Actor {
   
   std::shared_ptr<rela::RNNPrioritizedReplay> replayBuffer_;
   std::unique_ptr<rela::R2D2Buffer> r2d2Buffer_;
-  std::vector<int> presentStyle_;
+  int presentStyle_ = 0;
 
   
   rela::TensorDict prevHidden_;

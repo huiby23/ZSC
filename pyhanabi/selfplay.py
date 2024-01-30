@@ -109,7 +109,7 @@ def parse_args():
 
     # playstyles setting
     parser.add_argument("--play_styles", type=int, default=0)
-    parser.add_argument("--encoding_duplicate", type=int, default=1)
+    parser.add_argument("--playstyle_embedding", type=int, default=0)
     parser.add_argument("--rand_perstep", type=bool, default=False)  
 
     # PBL-encoding training setting
@@ -180,10 +180,6 @@ if __name__ == "__main__":
     dict_stats['score_pp'] = np.zeros(args.num_epoch)
 
     if args.no_sharing:
-        if args.play_styles > 0:
-            agent_playstyles = args.play_styles * args.encoding_duplicate
-        else:
-            agent_playstyles = 0
         agent = r2d2.R2D2Agent(
             (args.method == "vdn"),
             args.multi_step,
@@ -220,7 +216,7 @@ if __name__ == "__main__":
             adv_type=args.adv_type,
             adv_ratio=args.adv_ratio,
             play_styles=args.play_styles,
-            encoding_duplicate=args.encoding_duplicate
+            play_style_embedding_dim=args.playstyle_embedding
         )
         agent_p.sync_target_with_online()  
 
@@ -258,7 +254,7 @@ if __name__ == "__main__":
         belief_model = None
         
         print('Agent initialization complete. Disable parameter sharing.')
-        agent_params = {'play_styles':args.play_styles, 'encoding_duplicate':args.encoding_duplicate, 'rand_perstep':args.rand_perstep}
+        agent_params = {'play_styles':args.play_styles, 'rand_perstep':args.rand_perstep}
 
         if args.training_type == 0: # regular training, only main and regular partner: 
             print('type 0 population based training')
