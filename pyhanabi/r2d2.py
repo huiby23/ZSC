@@ -49,23 +49,23 @@ class R2D2Agent(torch.jit.ScriptModule):
         adv_type=0,
         adv_ratio=0,
         play_styles=0,
-        encoding_duplicate=1,
+        play_style_embedding_dim = 0,
     ):
         super().__init__()
         self.play_styles = play_styles
-        self.encoding_duplicate = encoding_duplicate
-        self.playstyle_size = play_styles * encoding_duplicate
+        self.play_style_embedding_dim = play_style_embedding_dim
         self.indim = in_dim
-        print('Init r2d2agent, indim:', in_dim, 'playstyle_size:',self.playstyle_size)
-        in_dim_list = [in_dim[0],in_dim[1]+self.playstyle_size,in_dim[2]]
+        print('Init r2d2agent, indim:', in_dim, 'play_style_embedding_dim:',self.play_style_embedding_dim)
+        in_dim_list = [in_dim[0],in_dim[1]+self.play_style_embedding_dim,in_dim[2]]
 
         in_dim = in_dim_list
 
         if self.play_styles > 0:
             # generate tensors for backup 
-            self.playstyle_list = torch.zeros((play_styles,play_styles*encoding_duplicate)).to(device)
-            for i in range(play_styles):
-                self.playstyle_list[i,i::play_styles] = 1
+            self.playstyle_list = torch.eye(play_styles).to(device)
+            self.playstyle_layer = nn.Linear(play_styles,play_style_embedding_dim)
+        else:
+            self.playstyle_layer = nn.Linear(2,2)
 
         if net == "ffwd":
             self.online_net = FFWDNet(in_dim, hid_dim, out_dim).to(device)
@@ -141,7 +141,7 @@ class R2D2Agent(torch.jit.ScriptModule):
             nlayer=self.nlayer,
             max_len=self.max_len,
             play_styles=self.play_styles,
-            encoding_duplicate=self.encoding_duplicate,
+            play_style_embedding_dim=self.play_style_embedding_dim,
         )
         cloned.load_state_dict(self.state_dict())
         cloned.train(self.training)
@@ -191,7 +191,9 @@ class R2D2Agent(torch.jit.ScriptModule):
         """
         priv_s = obs["priv_s"]
         if self.play_styles > 0:
-            priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
+            onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
+            playstyle_encoding = self.playstyle_layer(onehot_playstyle)
+            priv_s = torch.cat((priv_s,playstyle_encoding),dim=-1)
         publ_s = obs["publ_s"]
         legal_move = obs["legal_move"]
         if "eps" in obs:
@@ -274,7 +276,9 @@ class R2D2Agent(torch.jit.ScriptModule):
         assert self.multi_step == 1
         priv_s = input_["priv_s"]
         if self.play_styles > 0:
-            priv_s = torch.cat((priv_s,input_["playStyle"]),dim=-1)
+            onehot_playstyle = nn.functional.one_hot(input_["playStyle"],num_classes=self.play_styles).float()
+            playstyle_encoding = self.playstyle_layer(onehot_playstyle)
+            priv_s = torch.cat((priv_s,playstyle_encoding),dim=-1)
         publ_s = input_["publ_s"]
         legal_move = input_["legal_move"]
         act_hid = {
@@ -348,11 +352,13 @@ class R2D2Agent(torch.jit.ScriptModule):
     ) -> torch.Tensor:
         priv_s = obs["priv_s"]
         assert (self.play_styles > 0)
-        play_style = obs["playStyle"]
-        expand_playstyle = play_style.unsqueeze(0).expand(self.playstyle_size+1,*play_style.shape)
+        onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
+        playstyle_encoding = self.playstyle_layer(onehot_playstyle)
+        expand_playstyle = playstyle_encoding.unsqueeze(0).expand(self.playstyle_size+1,*playstyle_encoding.shape)
+
         for idx in range(self.play_styles):
-            expand_playstyle[idx+1,...] = self.playstyle_list[idx,...].expand(*play_style.shape)
-        priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
+            expand_playstyle[idx+1,...] = self.playstyle_list[idx,...].expand(*playstyle_encoding.shape)
+        # priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
         legal_move = obs["legal_move"]
         action = action["a"]
         
@@ -384,7 +390,9 @@ class R2D2Agent(torch.jit.ScriptModule):
         max_seq_len = obs["priv_s"].size(0)
         priv_s = obs["priv_s"]
         if self.play_styles > 0:
-            priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
+            onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
+            playstyle_encoding = self.playstyle_layer(onehot_playstyle)
+            priv_s = torch.cat((priv_s,playstyle_encoding),dim=-1)
         publ_s = obs["publ_s"]
         legal_move = obs["legal_move"]
         action = action["a"]
@@ -527,7 +535,9 @@ class R2D2Agent(torch.jit.ScriptModule):
         max_seq_len = batch.obs["priv_s"].size(0)
         priv_s = batch.obs["priv_s"]
         if self.play_styles > 0:
-            priv_s = torch.cat((priv_s,batch.obs["playStyle"]),dim=-1)
+            onehot_playstyle = nn.functional.one_hot(batch.obs["playStyle"],num_classes=self.play_styles).float()
+            playstyle_encoding = self.playstyle_layer(onehot_playstyle)
+            priv_s = torch.cat((priv_s,playstyle_encoding),dim=-1)
         publ_s = batch.obs["publ_s"]
         legal_move = batch.obs["legal_move"]
 

@@ -82,7 +82,6 @@ PYBIND11_MODULE(hanalearn, m) {
            int,       // seqLen,
            float,     // gamma,
            int,       // playStyles
-           int,    // duplicate
            bool>()) // randperstep
       .def(py::init<
            std::shared_ptr<rela::BatchRunner>,
@@ -92,7 +91,6 @@ PYBIND11_MODULE(hanalearn, m) {
            bool,     // sad
            bool,     // hideAction
            int,      // playStyles
-           int,   // duplicate
            bool>()) // randperstep
       .def(py::init<
            std::shared_ptr<rela::BatchRunner>,
@@ -103,7 +101,6 @@ PYBIND11_MODULE(hanalearn, m) {
            bool,     // hideAction
            bool,     // isref
            int,      // playStyles
-           int,   // duplicate
            bool>()) // randperstep
       .def("set_partners", &R2D2Actor::setPartners)
       .def("set_belief_runner", &R2D2Actor::setBeliefRunner)

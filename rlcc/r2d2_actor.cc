@@ -137,13 +137,8 @@ void R2D2Actor::reset(const HanabiEnv& env) {
     r2d2Buffer_->init(hidden_);
   }
   if (playStyles_ > 0){
-    std::fill(presentStyle_.begin(), presentStyle_.end(), 0);
     srand((unsigned)time(NULL)); 
-    int randomPosition = rand() % playStyles_;
-    for (int i = 0; i < encodingDuplicate_-1; i++){
-      randomPosition += playStyles_;
-      presentStyle_[randomPosition] = 1;
-    }
+    presentStyle_ = rand() % playStyles_;
   }
 
   const auto& game = env.getHleGame();
@@ -220,13 +215,7 @@ void R2D2Actor::observeBeforeAct(const HanabiEnv& env) {
   // add features such as playstyle, eps and temperature
   if (playStyles_ > 0){
     if (randPerstep_){
-      std::fill(presentStyle_.begin(), presentStyle_.end(), 0);
-      srand((unsigned)time(NULL)); 
-      int randomPosition = rand() % playStyles_;
-      for (int i = 0; i < encodingDuplicate_-1; i++){
-        randomPosition += playStyles_;
-        presentStyle_[randomPosition] = 1;
-      }
+      presentStyle_ = rand() % playStyles_;
     }
     input["playStyle"] = torch::tensor(presentStyle_);
   }

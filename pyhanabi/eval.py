@@ -219,7 +219,7 @@ def evaluate(
             for i in range(num_player):
                 if params[i]:
                     actor = hanalearn.R2D2Actor(
-                        runners[i], num_player, i, False, sad[i], hide_action[i], params[i]["play_styles"], params[i]["encoding_duplicate"], params[i]["rand_perstep"]
+                        runners[i], num_player, i, False, sad[i], hide_action[i], params[i]["play_styles"], params[i]["rand_perstep"]
                     )
                 else:
                     actor = hanalearn.R2D2Actor(
