@@ -55,7 +55,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         self.play_styles = play_styles
         self.play_style_embedding_dim = play_style_embedding_dim
         self.indim = in_dim
-        print('Init r2d2agent, indim:', in_dim, 'play_style_embedding_dim:',self.play_style_embedding_dim)
+        #print('Init r2d2agent, indim:', in_dim, 'play_style_embedding_dim:',self.play_style_embedding_dim)
         in_dim_list = [in_dim[0],in_dim[1]+self.play_style_embedding_dim,in_dim[2]]
 
         in_dim = in_dim_list
