@@ -20,9 +20,9 @@ import math
 @torch.jit.script
 def duel(v: torch.Tensor, a: torch.Tensor, legal_move: torch.Tensor) -> torch.Tensor:
     assert a.size() == legal_move.size()
-    assert legal_move.dim() == 3  # seq, batch, dim
+    # assert legal_move.dim() == 3  # seq, batch, dim
     legal_a = a * legal_move
-    q = v + legal_a - legal_a.mean(2, keepdim=True)
+    q = v + legal_a - legal_a.mean(-1, keepdim=True)
     return q
 
 
@@ -93,6 +93,23 @@ class FFWDNet(torch.jit.ScriptModule):
         o = self.net(priv_s)
         a = self.fc_a(o)
         return a, hid
+
+    @torch.jit.script_method
+    def calculate_distribution(
+        self,
+        priv_s: torch.Tensor,
+        legal_move: torch.Tensor,
+    ) -> torch.Tensor:
+
+        o = self.net(priv_s)
+        a = self.fc_a(o)
+        v = self.fc_v(o)
+        q = duel(v, a, legal_move)
+        q_prob = nn.functional.softmax(q,dim=-1)
+        # q: [(seq_len), batch, num_action]
+        # action: [seq_len, batch]
+
+        return q_prob
 
     @torch.jit.script_method
     def calculate_p(
@@ -228,6 +245,42 @@ class LSTMNet(torch.jit.ScriptModule):
         return a, {"h0": h, "c0": c}
 
     @torch.jit.script_method
+    def calculate_distribution(
+        self,
+        priv_s: torch.Tensor,
+        legal_move: torch.Tensor,
+    ) -> torch.Tensor:
+
+        o = self.net(priv_s)
+        a = self.fc_a(o)
+        v = self.fc_v(o)
+        q = duel(v, a, legal_move)
+        q_prob = nn.functional.softmax(q,dim=-1)
+        # q: [(seq_len), batch, num_action]
+        # action: [seq_len, batch]
+
+        return q_prob
+
+    @torch.jit.script_method
+    def calculate_p(
+        self,
+        priv_s: torch.Tensor,
+        legal_move: torch.Tensor,
+        action: torch.Tensor,
+    ) -> torch.Tensor:
+
+        o = self.net(priv_s)
+        a = self.fc_a(o)
+        v = self.fc_v(o)
+        q = duel(v, a, legal_move)
+        q_prob = nn.functional.softmax(q,dim=-1)
+        # q: [(seq_len), batch, num_action]
+        # action: [seq_len, batch]
+        pa = q_prob.gather(-1, action.unsqueeze(-1)).squeeze(-1)
+
+        return pa
+
+    @torch.jit.script_method
     def forward(
         self,
         priv_s: torch.Tensor,
@@ -331,6 +384,42 @@ class PublicLSTMNet(torch.jit.ScriptModule):
         shape = (self.num_lstm_layer, batchsize, self.hid_dim)
         hid = {"h0": torch.zeros(*shape), "c0": torch.zeros(*shape)}
         return hid
+
+    @torch.jit.script_method
+    def calculate_distribution(
+        self,
+        priv_s: torch.Tensor,
+        legal_move: torch.Tensor,
+    ) -> torch.Tensor:
+
+        o = self.net(priv_s)
+        a = self.fc_a(o)
+        v = self.fc_v(o)
+        q = duel(v, a, legal_move)
+        q_prob = nn.functional.softmax(q,dim=-1)
+        # q: [(seq_len), batch, num_action]
+        # action: [seq_len, batch]
+
+        return q_prob
+
+    @torch.jit.script_method
+    def calculate_p(
+        self,
+        priv_s: torch.Tensor,
+        legal_move: torch.Tensor,
+        action: torch.Tensor,
+    ) -> torch.Tensor:
+
+        o = self.net(priv_s)
+        a = self.fc_a(o)
+        v = self.fc_v(o)
+        q = duel(v, a, legal_move)
+        q_prob = nn.functional.softmax(q,dim=-1)
+        # q: [(seq_len), batch, num_action]
+        # action: [seq_len, batch]
+        pa = q_prob.gather(-1, action.unsqueeze(-1)).squeeze(-1)
+
+        return pa
 
     @torch.jit.script_method
     def act(
