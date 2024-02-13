@@ -22,7 +22,7 @@ import utils
 
 # define protagonist set here
 
-protagonist_pathset = ['test/ps5_pe50_t2_rp_mir02_seed0','test/ps5_pe50_t2_rp_mir0_seed0','test/ps5_pe50_t2_mir02_seed0','test/ps5_pe50_t2_mir0_seed0']
+protagonist_pathset = ['ps10_mir0_seed0','ps10_rp_mir0_seed0','ps10_rp_mir003_seed0','ps10_rp_mir01_seed0','ps10_rp_mirsub01_seed0','ps5_mir0_seed0','ps5_rp_mir0_seed0','ps5_rp_mir003_seed0','ps5_rp_mir01_seed0','ps5_rp_mirsub01_seed0']
 
 # define partner set here
 partner_pathset = []
@@ -42,7 +42,7 @@ for prot_id, prot_path in enumerate(protagonist_pathset):
         sys.stdout = f
         for part_id, part_path in enumerate(partner_pathset):
             test_models = ['models/'+prot_path+'/model0.pthw','models/'+part_path+'/model0.pthw']
-            score, _, _, _, _ = evaluate_saved_model(test_models, 100, 0, 0)
+            score, _, _, _, _ = evaluate_saved_model(test_models, 500, 0, 0)
             score_set.append(score)
         sys.stdout = original_stdout
     print('prot id: ', prot_id, 'test complete, score:', np.mean(score_set), '+-', np.std(score_set))
