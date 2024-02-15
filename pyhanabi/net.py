@@ -103,9 +103,8 @@ class FFWDNet(torch.jit.ScriptModule):
 
         o = self.net(priv_s)
         a = self.fc_a(o)
-        v = self.fc_v(o)
-        q = duel(v, a, legal_move)
-        q_prob = nn.functional.softmax(q,dim=-1)
+        normed_a = (a - a.mean(dim=-1,keepdim=True))/a.std(dim=-1,keepdim=True)
+        q_prob = nn.functional.softmax(normed_a,dim=-1)
         # q: [(seq_len), batch, num_action]
         # action: [seq_len, batch]
 
@@ -121,9 +120,8 @@ class FFWDNet(torch.jit.ScriptModule):
 
         o = self.net(priv_s)
         a = self.fc_a(o)
-        v = self.fc_v(o)
-        q = duel(v, a, legal_move)
-        q_prob = nn.functional.softmax(q,dim=-1)
+        normed_a = (a - a.mean(dim=-1,keepdim=True))/a.std(dim=-1,keepdim=True)
+        q_prob = nn.functional.softmax(normed_a,dim=-1)
         # q: [(seq_len), batch, num_action]
         # action: [seq_len, batch]
         pa = q_prob.gather(-1, action.unsqueeze(-1)).squeeze(-1)
@@ -253,9 +251,8 @@ class LSTMNet(torch.jit.ScriptModule):
 
         o = self.net(priv_s)
         a = self.fc_a(o)
-        v = self.fc_v(o)
-        q = duel(v, a, legal_move)
-        q_prob = nn.functional.softmax(q,dim=-1)
+        normed_a = a - a.mean(dim=-1,keepdim=True)
+        q_prob = nn.functional.softmax(normed_a,dim=-1)
         # q: [(seq_len), batch, num_action]
         # action: [seq_len, batch]
 
@@ -271,9 +268,8 @@ class LSTMNet(torch.jit.ScriptModule):
 
         o = self.net(priv_s)
         a = self.fc_a(o)
-        v = self.fc_v(o)
-        q = duel(v, a, legal_move)
-        q_prob = nn.functional.softmax(q,dim=-1)
+        normed_a = (a - a.mean(dim=-1,keepdim=True))/a.std(dim=-1,keepdim=True)
+        q_prob = nn.functional.softmax(normed_a,dim=-1)
         # q: [(seq_len), batch, num_action]
         # action: [seq_len, batch]
         pa = q_prob.gather(-1, action.unsqueeze(-1)).squeeze(-1)
@@ -394,9 +390,8 @@ class PublicLSTMNet(torch.jit.ScriptModule):
 
         o = self.net(priv_s)
         a = self.fc_a(o)
-        v = self.fc_v(o)
-        q = duel(v, a, legal_move)
-        q_prob = nn.functional.softmax(q,dim=-1)
+        normed_a = (a - a.mean(dim=-1,keepdim=True))/a.std(dim=-1,keepdim=True)
+        q_prob = nn.functional.softmax(normed_a,dim=-1)
         # q: [(seq_len), batch, num_action]
         # action: [seq_len, batch]
 
@@ -412,9 +407,8 @@ class PublicLSTMNet(torch.jit.ScriptModule):
 
         o = self.net(priv_s)
         a = self.fc_a(o)
-        v = self.fc_v(o)
-        q = duel(v, a, legal_move)
-        q_prob = nn.functional.softmax(q,dim=-1)
+        normed_a = (a - a.mean(dim=-1,keepdim=True))/a.std(dim=-1,keepdim=True)
+        q_prob = nn.functional.softmax(normed_a,dim=-1)
         # q: [(seq_len), batch, num_action]
         # action: [seq_len, batch]
         pa = q_prob.gather(-1, action.unsqueeze(-1)).squeeze(-1)
