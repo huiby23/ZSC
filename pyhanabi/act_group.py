@@ -45,7 +45,7 @@ class ActGroup:
         agent_p = None, 
         replay_buffer_p = None, 
         agent_params = None,  
-        split_train = False,
+        split_type = 0,
     ):
         self.devices = devices.split(",")
         if (agent_params is None):
@@ -71,7 +71,61 @@ class ActGroup:
 
             self.actors = []
             assert (method == "iql")
-            if split_train:
+            if split_type == 0:
+                for i in range(num_thread):
+                    thread_actors = []
+                    for j in range(num_game_per_thread):
+                        game_actors = []
+                        actor = hanalearn.R2D2Actor(
+                            self.model_runners[i % self.num_runners],
+                            seed,
+                            num_player,
+                            0,
+                            explore_eps,
+                            boltzmann_t,
+                            False,
+                            sad,
+                            shuffle_color,
+                            hide_action,
+                            trinary,
+                            replay_buffer,
+                            multi_step,
+                            max_len,
+                            gamma,
+                            0,
+                            False,
+                        )                   
+                        actor_p = hanalearn.R2D2Actor(
+                            self.model_runners_p[i % self.num_runners],
+                            seed,
+                            num_player,
+                            1,
+                            explore_eps,
+                            boltzmann_t,
+                            False,
+                            sad,
+                            shuffle_color,
+                            hide_action,
+                            trinary,
+                            replay_buffer_p,
+                            multi_step,
+                            max_len,
+                            gamma,
+                            agent_params["play_styles"],
+                            agent_params["rand_perstep"],
+                        )                        
+
+                        seed += 1
+                        game_actors = [actor,actor_p]
+                        for k in range(num_player):
+                            partners = game_actors[:]
+                            partners[k] = None
+                            game_actors[k].set_partners(partners)
+                        thread_actors.append(game_actors)
+                    self.actors.append(thread_actors)
+                print("ActGroup created")
+
+            elif split_type == 1: # [main, part] and [part, part]
                 for i in range(num_thread):
                     thread_actors = []   
                     for j in range(num_game_per_thread//2):
@@ -173,10 +227,10 @@ class ActGroup:
                         thread_actors.append(game_actors)
                     self.actors.append(thread_actors)
 
-            else:
+            elif split_type == 2: # [main, main] and [main, part]
                 for i in range(num_thread):
-                    thread_actors = []
-                    for j in range(num_game_per_thread):
+                    thread_actors = []   
+                    for j in range(num_game_per_thread//2):
                         game_actors = []
                         actor = hanalearn.R2D2Actor(
                             self.model_runners[i % self.num_runners],
@@ -224,8 +278,172 @@ class ActGroup:
                             partners[k] = None
                             game_actors[k].set_partners(partners)
                         thread_actors.append(game_actors)
+
+                        actor_m1 = hanalearn.R2D2Actor(
+                            self.model_runners[i % self.num_runners],
+                            seed,
+                            num_player,
+                            0,
+                            explore_eps,
+                            boltzmann_t,
+                            False,
+                            sad,
+                            shuffle_color,
+                            hide_action,
+                            trinary,
+                            replay_buffer,
+                            multi_step,
+                            max_len,
+                            gamma,
+                            0,
+                            False,
+                        )        
+
+                        actor_m2 = hanalearn.R2D2Actor(
+                            self.model_runners[i % self.num_runners],
+                            seed,
+                            num_player,
+                            0,
+                            explore_eps,
+                            boltzmann_t,
+                            False,
+                            sad,
+                            shuffle_color,
+                            hide_action,
+                            trinary,
+                            replay_buffer,
+                            multi_step,
+                            max_len,
+                            gamma,
+                            0,
+                            False,
+                        )                            
+
+                        seed += 1
+                        game_actors = []
+                        game_actors = [actor_m1,actor_m2]
+                        for k in range(num_player):
+                            partners = game_actors[:]
+                            partners[k] = None
+                            game_actors[k].set_partners(partners)
+                        thread_actors.append(game_actors)
                     self.actors.append(thread_actors)
-                print("ActGroup created")
+
+            elif split_type == 3: # [main, main] and [main, part]*2 and [part,part]
+                for i in range(num_thread):
+                    thread_actors = []   
+                    for j in range(num_game_per_thread//4):
+                        game_actors = []
+                        for ij in range(2):
+                            actor = hanalearn.R2D2Actor(
+                                self.model_runners[i % self.num_runners],
+                                seed,
+                                num_player,
+                                0,
+                                explore_eps,
+                                boltzmann_t,
+                                False,
+                                sad,
+                                shuffle_color,
+                                hide_action,
+                                trinary,
+                                replay_buffer,
+                                multi_step,
+                                max_len,
+                                gamma,
+                                0,
+                                False,
+                            )                   
+                            actor_p = hanalearn.R2D2Actor(
+                                self.model_runners_p[i % self.num_runners],
+                                seed,
+                                num_player,
+                                1,
+                                explore_eps,
+                                boltzmann_t,
+                                False,
+                                sad,
+                                shuffle_color,
+                                hide_action,
+                                trinary,
+                                replay_buffer_p,
+                                multi_step,
+                                max_len,
+                                gamma,
+                                agent_params["play_styles"],
+                                agent_params["rand_perstep"],
+                            )                        
+                            seed += 1
+                            game_actors = [actor,actor_p]
+                            for k in range(num_player):
+                                partners = game_actors[:]
+                                partners[k] = None
+                                game_actors[k].set_partners(partners)
+                            thread_actors.append(game_actors)
+
+                        game_actors = []
+                        for ij in range(2):
+                            seed += 1
+                            actor_m = hanalearn.R2D2Actor(
+                                self.model_runners[i % self.num_runners],
+                                seed,
+                                num_player,
+                                0,
+                                explore_eps,
+                                boltzmann_t,
+                                False,
+                                sad,
+                                shuffle_color,
+                                hide_action,
+                                trinary,
+                                replay_buffer,
+                                multi_step,
+                                max_len,
+                                gamma,
+                                0,
+                                False,
+                            ) 
+                            game_actors.append(actor_m)                                
+                        
+                        for k in range(num_player):
+                            partners = game_actors[:]
+                            partners[k] = None
+                            game_actors[k].set_partners(partners)
+                        thread_actors.append(game_actors)
+
+                        game_actors = []
+                        for ij in range(2):
+                            seed += 1
+                            actor_p = hanalearn.R2D2Actor(
+                                self.model_runners_p[i % self.num_runners],
+                                seed,
+                                num_player,
+                                1,
+                                explore_eps,
+                                boltzmann_t,
+                                False,
+                                sad,
+                                shuffle_color,
+                                hide_action,
+                                trinary,
+                                replay_buffer_p,
+                                multi_step,
+                                max_len,
+                                gamma,
+                                agent_params["play_styles"],
+                                agent_params["rand_perstep"],
+                            )             
+                            game_actors.append(actor_p)                                
+                        
+                        for k in range(num_player):
+                            partners = game_actors[:]
+                            partners[k] = None
+                            game_actors[k].set_partners(partners)
+                        thread_actors.append(game_actors)
+                    self.actors.append(thread_actors)
+            else:
+                print('unsupported split type!')
+
         else:
             self.model_runners = []
             for dev in self.devices:
