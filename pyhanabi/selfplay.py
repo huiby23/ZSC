@@ -116,10 +116,10 @@ def parse_args():
     # 0 - one main agent and one partner agent, training
     # 1 - partner vs partner training first, then main vs partner training 
     # 2 - one main agent and one partner agent, with each round randomly choosing main vs partner or partner vs partner
-    parser.add_argument("--population_epoch", type=int, default=100) # used in type1 training
-    parser.add_argument("--mutual_info_ratio", type=float, default=0)    
-    parser.add_argument("--dis_mi_ratio", type=float, default=0) 
-    parser.add_argument("--entropy_ratio", type=float, default=0)   
+    parser.add_argument("--div_type", type=int, default=0) # 0:sim_mim; 1:real_mim; 2:entropy   
+    parser.add_argument("--action_inputtype", type=int, default=0) # 0:greedy action; 1:in batch action
+    parser.add_argument("--div_weight", type=float, default=0) 
+    parser.add_argument("--ps_duplicate", type=int, default=1)
 
     # training setting
     args = parser.parse_args()
@@ -174,15 +174,15 @@ if __name__ == "__main__":
         args.train_bomb,
         args.max_len,
     )
-
     dict_stats = {}
-    dict_stats['score_mm'] = np.zeros(args.num_epoch)
-    dict_stats['score_mp'] = np.zeros(args.num_epoch)
-    dict_stats['score_pp'] = np.zeros(args.num_epoch)
-    dict_stats['main_rl_loss'] = np.zeros(args.num_epoch)
-    dict_stats['partner_rl_loss'] = np.zeros(args.num_epoch)
-    dict_stats['partner_extra_loss'] = np.zeros(args.num_epoch)
-    dict_stats['partner_extra_info'] = np.zeros(args.num_epoch)
+    for dict_key in ['score_mm','score_mp','score_pp','main_rl_loss','partner_rl_loss','partner_extra_loss','partner_extra_info']:
+        dict_stats[dict_key] = np.zeros(args.num_epoch)
+
+    diversity_args = {
+        'weight': args.div_weight,
+        'act_type': args.action_inputtype,
+        'div_type': args.div_type,
+    }
 
     if args.no_sharing:
         agent = r2d2.R2D2Agent(
@@ -221,6 +221,7 @@ if __name__ == "__main__":
             adv_type=args.adv_type,
             adv_ratio=args.adv_ratio,
             play_styles=args.play_styles,
+            ps_duplicate=args.ps_duplicate,
         )
         agent_p.sync_target_with_online()  
 
@@ -323,6 +324,7 @@ if __name__ == "__main__":
             raw_loss_list = []
             extra_loss_list = []
             extra_info_list = []
+            start_time = time.time()
             for batch_idx in range(args.epoch_len):
                 num_update = batch_idx + epoch * args.epoch_len
                 if num_update % args.num_update_between_sync == 0:
@@ -343,13 +345,13 @@ if __name__ == "__main__":
                 loss.backward()
                 
                 batch_p, weight_p = replay_buffer_p.sample(args.batchsize, args.train_device)
-                loss_p, priority_p, online_q_p, extra_loss, extra_info = agent_p.loss(batch_p, args.aux_weight, stat_p, args.mutual_info_ratio,args.entropy_ratio,args.dis_mi_ratio)
+                loss_p, priority_p, online_q_p, extra_loss, extra_info = agent_p.loss(batch_p, args.aux_weight, stat_p, diversity_args)
                 loss_p = (loss_p * weight).mean()
-                extra_loss = (extra_loss * weight).mean()
+                extra_loss = torch.mean(extra_loss * weight)
                 raw_loss_list.append(loss_p.item())
                 extra_loss_list.append(extra_loss.item())
                 extra_info_list.append(extra_info)
-                final_p_loss = loss_p - extra_loss
+                final_p_loss = loss_p + args.div_weight*extra_loss
                 final_p_loss.backward()
                 torch.cuda.synchronize()
                 stopwatch.time("forward & backward")
@@ -441,8 +443,8 @@ if __name__ == "__main__":
                 None, agent.online_net.state_dict(), score_mp, False, force_save_name, agent_p.online_net.state_dict()
             )
             print(
-                "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
-                % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
+                "epoch %d, train time: %.3e, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
+                % (epoch, time.time()-start_time,score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
             )
             print('main rl loss: %.3e, part rl loss: %.3e, part extra loss: %.3e, part extra info: %.3e'%(dict_stats['main_rl_loss'][epoch],dict_stats['partner_rl_loss'][epoch],dict_stats['partner_extra_loss'][epoch],dict_stats['partner_extra_info'][epoch]))
             print("==========")
