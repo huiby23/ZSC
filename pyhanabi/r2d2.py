@@ -49,12 +49,14 @@ class R2D2Agent(torch.jit.ScriptModule):
         adv_type=0,
         adv_ratio=0,
         play_styles=0,
+        ps_duplicate=1,
     ):
         super().__init__()
         self.play_styles = play_styles
         self.indim = in_dim
+        self.ps_duplicate = ps_duplicate
         #print('Init r2d2agent, indim:', in_dim, 'play_style_embedding_dim:',self.play_style_embedding_dim)
-        in_dim_list = [in_dim[0],in_dim[1]+play_styles,in_dim[2]]
+        in_dim_list = [in_dim[0],in_dim[1]+ps_duplicate*play_styles,in_dim[2]]
 
         in_dim = in_dim_list
 
@@ -112,7 +114,11 @@ class R2D2Agent(torch.jit.ScriptModule):
     def get_h0(self, batchsize: int) -> Dict[str, torch.Tensor]:
         return self.online_net.get_h0(batchsize)
 
-
+    def generate_ps(self, in_tensor):
+        if self.ps_duplicate == 1:
+            return in_tensor
+        else:
+            return in_tensor.repeat_interleave(self.play_styles, dim=-1) 
 
     def clone(self, device, overwrite=None):
         if overwrite is None:
@@ -138,6 +144,7 @@ class R2D2Agent(torch.jit.ScriptModule):
             nlayer=self.nlayer,
             max_len=self.max_len,
             play_styles=self.play_styles,
+            ps_duplicate=self.ps_duplicate,
         )
         cloned.load_state_dict(self.state_dict())
         cloned.train(self.training)
@@ -188,7 +195,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         priv_s = obs["priv_s"]
         if self.play_styles > 0:
             onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
-            priv_s = torch.cat((priv_s,onehot_playstyle),dim=-1)
+            priv_s = torch.cat((priv_s,self.generate_ps(onehot_playstyle)),dim=-1)
         publ_s = obs["publ_s"]
         legal_move = obs["legal_move"]
         if "eps" in obs:
@@ -272,7 +279,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         priv_s = input_["priv_s"]
         if self.play_styles > 0:
             onehot_playstyle = nn.functional.one_hot(input_["playStyle"],num_classes=self.play_styles).float()
-            priv_s = torch.cat((priv_s,onehot_playstyle),dim=-1)
+            priv_s = torch.cat((priv_s,self.generate_ps(onehot_playstyle)),dim=-1)
         publ_s = input_["publ_s"]
         legal_move = input_["legal_move"]
         act_hid = {
@@ -332,28 +339,31 @@ class R2D2Agent(torch.jit.ScriptModule):
         terminal = input_["terminal"]
         bootstrap = input_["bootstrap"]
         seq_len = input_["seq_len"]
-        err, _, _ = self.td_error(
+        err, _, _, _, _ = self.td_error(
             obs, hid, action, reward, terminal, bootstrap, seq_len
         )
         priority = err.abs()
         priority = self.aggregate_priority(priority, seq_len).detach().cpu()
         return {"priority": priority}
 
-    def maximum_entropy(
+    def get_entropy(
         self,
         obs: Dict[str, torch.Tensor],
-    ) -> torch.Tensor:
+        hid: Dict[str, torch.Tensor],
+    ):
         priv_s = obs["priv_s"]
         assert (self.play_styles > 0)
         expand_playstyles = self.playstyle_list.unsqueeze(1).unsqueeze(1).expand(self.play_styles,*priv_s.shape[:-1],self.play_styles)
-            
+        expand_hid = {}
+        expand_hid['h0'] = hid['h0'].unsqueeze(0).expand(self.play_styles,*hid['h0'].shape)
+        expand_hid['c0'] = hid['c0'].unsqueeze(0).expand(self.play_styles,*hid['c0'].shape)
         legal_move = obs["legal_move"]
         expand_priv_s = priv_s.unsqueeze(0).expand(self.play_styles,*priv_s.shape)
         
         expand_legal_move = legal_move.unsqueeze(0).expand(self.play_styles,*legal_move.shape)
         expand_obsinput = torch.cat((expand_priv_s,expand_playstyles),-1)
 
-        total_distribution = self.online_net.calculate_distribution(expand_obsinput,expand_legal_move)
+        total_distribution = self.online_net.calculate_distribution(expand_obsinput,expand_legal_move,expand_hid)
 
         mean_distribution = torch.mean(total_distribution,dim=0) + 1e-6
 
@@ -361,33 +371,34 @@ class R2D2Agent(torch.jit.ScriptModule):
 
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
-        return torch.sum(entropy,dim=0) 
+        return entropy.sum(dim=0), entropy.mean().item()
 
-    def mut_info_dis(
+    def get_real_mi(
         self,
         obs: Dict[str, torch.Tensor],
-        action: Dict[str, torch.Tensor],
-    ) -> torch.Tensor:
+        action: torch.Tensor,
+        hid: Dict[str, torch.Tensor],
+    ):
         priv_s = obs["priv_s"]
         assert (self.play_styles > 0)
         onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
         
         assert priv_s.dim() == 3
-
+        expand_hid = {}
+        expand_hid['h0'] = hid['h0'].unsqueeze(0).expand(self.play_styles,*hid['h0'].shape)
+        expand_hid['c0'] = hid['c0'].unsqueeze(0).expand(self.play_styles,*hid['c0'].shape)
         expanded_playstyles = self.playstyle_list.unsqueeze(1).unsqueeze(1).expand(self.play_styles,*onehot_playstyle.shape)
-
         onehot_playstyle_expand = onehot_playstyle.unsqueeze(0).expand_as(expanded_playstyles)
         
         # priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
         legal_move = obs["legal_move"]
-        action = action["a"]
         
         expand_priv_s = priv_s.unsqueeze(0).expand(self.play_styles,*priv_s.shape)
         expand_legal_move = legal_move.unsqueeze(0).expand(self.play_styles,*legal_move.shape)
         expand_action = action.unsqueeze(0).expand(self.play_styles,*action.shape)
-        expand_obsinput = torch.cat((expand_priv_s,expanded_playstyles),-1)
+        expand_obsinput = torch.cat((expand_priv_s,self.generate_ps(expanded_playstyles)),-1)
 
-        act_a, max_mask_count = self.online_net.calculate_maxval(expand_obsinput,expand_legal_move,expand_action)
+        act_a = self.online_net.calculate_maxval(expand_obsinput,expand_legal_move,expand_action,expand_hid)
 
         #act_a: [ps,a,b]
         #onehot_playstyle_expand: [ps,a,b,ps]
@@ -396,44 +407,47 @@ class R2D2Agent(torch.jit.ScriptModule):
 
         loss_mask = ((onehot_playstyle_expand != expanded_playstyles).sum(dim=-1) != 0).float()
         bin_loss = torch.mean(loss_mask*act_a)
-        extra_info = torch.mean(loss_mask*max_mask_count).item()
+        extra_info = torch.mean(loss_mask).item()
 
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
-        return -bin_loss.sum(dim=0), extra_info
+        return bin_loss.sum(dim=0), extra_info
 
-    def mutual_information(
+    def get_sim_mi(
         self,
         obs: Dict[str, torch.Tensor],
-        action: Dict[str, torch.Tensor],
-    ) -> torch.Tensor:
+        action: torch.Tensor,
+        hid: Dict[str, torch.Tensor],
+    ):
         priv_s = obs["priv_s"]
         assert (self.play_styles > 0)
         onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
         onehot_playstyle_expand = onehot_playstyle.unsqueeze(0)
         assert priv_s.dim() == 3
+        expand_hid = {}
+        expand_hid['h0'] = hid['h0'].unsqueeze(0).expand(self.play_styles+1,*hid['h0'].shape)
+        expand_hid['c0'] = hid['c0'].unsqueeze(0).expand(self.play_styles+1,*hid['c0'].shape)
 
         expanded_playstyles = self.playstyle_list.unsqueeze(1).unsqueeze(1).expand(self.play_styles,*onehot_playstyle.shape)
 
-        playstyle_encoding = torch.cat((onehot_playstyle_expand,expanded_playstyles),dim=0)
+        playstyle_encoding = torch.cat((onehot_playstyle_expand,self.generate_ps(expanded_playstyles)),dim=0)
         
         # priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
         legal_move = obs["legal_move"]
-        action = action["a"]
         
         expand_priv_s = priv_s.unsqueeze(0).expand(self.play_styles+1,*priv_s.shape)
         expand_legal_move = legal_move.unsqueeze(0).expand(self.play_styles+1,*legal_move.shape)
         expand_action = action.unsqueeze(0).expand(self.play_styles+1,*action.shape)
         expand_obsinput = torch.cat((expand_priv_s,playstyle_encoding),-1)
 
-        total_p_vals = self.online_net.calculate_p(expand_obsinput,expand_legal_move,expand_action)
+        total_p_vals = self.online_net.calculate_p(expand_obsinput,expand_legal_move,expand_action,expand_hid)
 
         target_p_vals = total_p_vals[0,...]
         res_p_vals = torch.mean(total_p_vals[1:,...],dim=0)
-        mutual_info = torch.sum(torch.log(target_p_vals/res_p_vals),dim=0)
+        mutual_info = torch.log(target_p_vals/res_p_vals)
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
-        return mutual_info
+        return mutual_info.sum(dim=0), mutual_info.mean().item()
 
     @torch.jit.script_method
     def td_error(
@@ -445,12 +459,12 @@ class R2D2Agent(torch.jit.ScriptModule):
         terminal: torch.Tensor,
         bootstrap: torch.Tensor,
         seq_len: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, Dict[str, torch.Tensor]]:
         max_seq_len = obs["priv_s"].size(0)
         priv_s = obs["priv_s"]
         if self.play_styles > 0:
             onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
-            priv_s = torch.cat((priv_s,onehot_playstyle),dim=-1)
+            priv_s = torch.cat((priv_s,self.generate_ps(onehot_playstyle)),dim=-1)
         publ_s = obs["publ_s"]
         legal_move = obs["legal_move"]
         action = action["a"]
@@ -510,7 +524,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         err = (target.detach() - online_qa) * mask
         if self.off_belief and "valid_fict" in obs:
             err = err * obs["valid_fict"]
-        return err, lstm_o, online_q
+        return err, lstm_o, online_q, greedy_a, hid
 
     def aux_task_iql(self, lstm_o, hand, seq_len, rl_loss_size, stat):
         seq_size, bsize, _ = hand.size()
@@ -542,8 +556,8 @@ class R2D2Agent(torch.jit.ScriptModule):
         agg_priority = self.eta * p_max + (1.0 - self.eta) * p_mean
         return agg_priority
 
-    def loss(self, batch, aux_weight, stat, mutual_info_weight=0, entropy_weight=0,dis_mi_weight=0):
-        err, lstm_o, online_q = self.td_error(
+    def loss(self, batch, aux_weight, stat, div_args={'weight':0}):
+        err, lstm_o, online_q, greedy_a, hid = self.td_error(
             batch.obs,
             batch.h0,
             batch.action,
@@ -564,16 +578,18 @@ class R2D2Agent(torch.jit.ScriptModule):
         loss = rl_loss
         extra_info = 0
         extra_loss = 0
-        if mutual_info_weight > 0:
-            mutual_info = self.mutual_information(batch.obs,batch.action)
-            extra_loss = mutual_info*mutual_info_weight
-            extra_info = (mutual_info/batch.obs.shape[0]).mean().item()
-        elif dis_mi_weight > 0:
-            dis_mi, extra_info = self.mut_info_dis(batch.obs,batch.action)
-            extra_loss = dis_mi_weight*dis_mi
-        elif entropy_weight > 0:
-            entropy = self.maximum_entropy(batch.obs)
-            extra_loss = entropy*entropy_weight
+        if div_args['weight'] > 0:
+            if div_args['act_type'] == 0: 
+                input_action = greedy_a
+            else:
+                input_action = batch.action["a"]
+            if div_args['div_type'] == 0: # sim mi
+                extra_loss, extra_info = self.get_sim_mi(batch.obs,input_action,batch.h0)
+                extra_loss = - extra_loss
+            elif div_args['div_type'] == 1: # real mi
+                extra_loss, extra_info = self.get_real_mi(batch.obs,input_action,batch.h0)
+            elif div_args['div_type'] == 2: # entropy
+                extra_loss, extra_info = self.get_entropy(batch.obs,batch.h0)
         
         if aux_weight <= 0:
             return loss, priority, online_q, extra_loss, extra_info
@@ -605,7 +621,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         priv_s = batch.obs["priv_s"]
         if self.play_styles > 0:
             onehot_playstyle = nn.functional.one_hot(batch.obs["playStyle"],num_classes=self.play_styles).float()
-            priv_s = torch.cat((priv_s,onehot_playstyle),dim=-1)
+            priv_s = torch.cat((priv_s,self.generate_ps(onehot_playstyle)),dim=-1)
         publ_s = batch.obs["publ_s"]
         legal_move = batch.obs["legal_move"]
 
