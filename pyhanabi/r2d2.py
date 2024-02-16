@@ -363,6 +363,45 @@ class R2D2Agent(torch.jit.ScriptModule):
         # i.e. no terminal in the middle
         return torch.sum(entropy,dim=0) 
 
+    def mut_info_dis(
+        self,
+        obs: Dict[str, torch.Tensor],
+        action: Dict[str, torch.Tensor],
+    ) -> torch.Tensor:
+        priv_s = obs["priv_s"]
+        assert (self.play_styles > 0)
+        onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
+        
+        assert priv_s.dim() == 3
+
+        expanded_playstyles = self.playstyle_list.unsqueeze(1).unsqueeze(1).expand(self.play_styles,*onehot_playstyle.shape)
+
+        onehot_playstyle_expand = onehot_playstyle.unsqueeze(0).expand_as(expanded_playstyles)
+        
+        # priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
+        legal_move = obs["legal_move"]
+        action = action["a"]
+        
+        expand_priv_s = priv_s.unsqueeze(0).expand(self.play_styles,*priv_s.shape)
+        expand_legal_move = legal_move.unsqueeze(0).expand(self.play_styles,*legal_move.shape)
+        expand_action = action.unsqueeze(0).expand(self.play_styles,*action.shape)
+        expand_obsinput = torch.cat((expand_priv_s,expanded_playstyles),-1)
+
+        act_a, max_mask_count = self.online_net.calculate_maxval(expand_obsinput,expand_legal_move,expand_action)
+
+        #act_a: [ps,a,b]
+        #onehot_playstyle_expand: [ps,a,b,ps]
+        #loss_mask: [ps,a,b]
+        #max_mask_count: [ps,a,b]
+
+        loss_mask = ((onehot_playstyle_expand != expanded_playstyles).sum(dim=-1) != 0).float()
+        bin_loss = torch.mean(loss_mask*act_a)
+        extra_info = torch.mean(loss_mask*max_mask_count).item()
+
+        # this only works because the trajectories are padded,
+        # i.e. no terminal in the middle
+        return -bin_loss.sum(dim=0), extra_info
+
     def mutual_information(
         self,
         obs: Dict[str, torch.Tensor],
@@ -503,7 +542,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         agg_priority = self.eta * p_max + (1.0 - self.eta) * p_mean
         return agg_priority
 
-    def loss(self, batch, aux_weight, stat, mutual_info_weight=0, entropy_weight=0):
+    def loss(self, batch, aux_weight, stat, mutual_info_weight=0, entropy_weight=0,dis_mi_weight=0):
         err, lstm_o, online_q = self.td_error(
             batch.obs,
             batch.h0,
@@ -523,16 +562,21 @@ class R2D2Agent(torch.jit.ScriptModule):
         priority = self.aggregate_priority(priority, batch.seq_len).detach().cpu()
 
         loss = rl_loss
+        extra_info = 0
         extra_loss = 0
         if mutual_info_weight > 0:
             mutual_info = self.mutual_information(batch.obs,batch.action)
             extra_loss = mutual_info*mutual_info_weight
+            extra_info = (mutual_info/batch.obs.shape[0]).mean().item()
+        elif dis_mi_weight > 0:
+            dis_mi, extra_info = self.mut_info_dis(batch.obs,batch.action)
+            extra_loss = dis_mi_weight*dis_mi
         elif entropy_weight > 0:
             entropy = self.maximum_entropy(batch.obs)
             extra_loss = entropy*entropy_weight
         
         if aux_weight <= 0:
-            return loss, priority, online_q, extra_loss
+            return loss, priority, online_q, extra_loss, extra_info
 
         if self.vdn:
             pred1 = self.aux_task_vdn(
@@ -554,7 +598,7 @@ class R2D2Agent(torch.jit.ScriptModule):
             )
             loss = rl_loss + aux_weight * pred
 
-        return loss, priority, online_q, extra_loss
+        return loss, priority, online_q, extra_loss, extra_info
 
     def behavior_clone_loss(self, online_q, batch, t, clone_bot, stat):
         max_seq_len = batch.obs["priv_s"].size(0)

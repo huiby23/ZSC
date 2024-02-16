@@ -118,6 +118,7 @@ def parse_args():
     # 2 - one main agent and one partner agent, with each round randomly choosing main vs partner or partner vs partner
     parser.add_argument("--population_epoch", type=int, default=100) # used in type1 training
     parser.add_argument("--mutual_info_ratio", type=float, default=0)    
+    parser.add_argument("--dis_mi_ratio", type=float, default=0) 
     parser.add_argument("--entropy_ratio", type=float, default=0)   
 
     # training setting
@@ -181,6 +182,7 @@ if __name__ == "__main__":
     dict_stats['main_rl_loss'] = np.zeros(args.num_epoch)
     dict_stats['partner_rl_loss'] = np.zeros(args.num_epoch)
     dict_stats['partner_extra_loss'] = np.zeros(args.num_epoch)
+    dict_stats['partner_extra_info'] = np.zeros(args.num_epoch)
 
     if args.no_sharing:
         agent = r2d2.R2D2Agent(
@@ -320,6 +322,7 @@ if __name__ == "__main__":
             main_loss_list = []
             raw_loss_list = []
             extra_loss_list = []
+            extra_info_list = []
             for batch_idx in range(args.epoch_len):
                 num_update = batch_idx + epoch * args.epoch_len
                 if num_update % args.num_update_between_sync == 0:
@@ -334,17 +337,18 @@ if __name__ == "__main__":
                 batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
                 stopwatch.time("sample data")
 
-                loss, priority, online_q, _ = agent.loss(batch, args.aux_weight, stat)
+                loss, priority, online_q, _, _ = agent.loss(batch, args.aux_weight, stat)
                 loss = (loss * weight).mean()
                 main_loss_list.append(loss.item())
                 loss.backward()
                 
                 batch_p, weight_p = replay_buffer_p.sample(args.batchsize, args.train_device)
-                loss_p, priority_p, online_q_p, extra_loss = agent_p.loss(batch_p, args.aux_weight, stat_p, args.mutual_info_ratio,args.entropy_ratio)
+                loss_p, priority_p, online_q_p, extra_loss, extra_info = agent_p.loss(batch_p, args.aux_weight, stat_p, args.mutual_info_ratio,args.entropy_ratio,args.dis_mi_ratio)
                 loss_p = (loss_p * weight).mean()
                 extra_loss = (extra_loss * weight).mean()
                 raw_loss_list.append(loss_p.item())
                 extra_loss_list.append(extra_loss.item())
+                extra_info_list.append(extra_info)
                 final_p_loss = loss_p - extra_loss
                 final_p_loss.backward()
                 torch.cuda.synchronize()
@@ -424,6 +428,7 @@ if __name__ == "__main__":
             dict_stats['main_rl_loss'][epoch] = np.mean(main_loss_list)
             dict_stats['partner_rl_loss'][epoch] = np.mean(raw_loss_list)
             dict_stats['partner_extra_loss'][epoch] = np.mean(extra_loss_list)
+            dict_stats['partner_extra_info'][epoch] = np.mean(extra_info_list)
             dict_stats['score_mm'][epoch] = score_mm
             dict_stats['score_mp'][epoch] = score_mp
             dict_stats['score_pp'][epoch] = score_pp
@@ -439,7 +444,7 @@ if __name__ == "__main__":
                 "epoch %d, score_mm: %.4f, score_mp: %.4f, score_pp: %.4f, perfect_mm: %.2f, perfect_mp: %.2f, perfect_pp: %.2f"
                 % (epoch, score_mm, score_mp, score_pp, perfect_mm * 100, perfect_mp * 100, perfect_pp * 100)
             )
-            print('main rl loss: %.3e, part rl loss: %.3e, part extra loss: %.3e'%(dict_stats['main_rl_loss'][epoch],dict_stats['partner_rl_loss'][epoch],dict_stats['partner_extra_loss'][epoch]))
+            print('main rl loss: %.3e, part rl loss: %.3e, part extra loss: %.3e, part extra info: %.3e'%(dict_stats['main_rl_loss'][epoch],dict_stats['partner_rl_loss'][epoch],dict_stats['partner_extra_loss'][epoch],dict_stats['partner_extra_info'][epoch]))
             print("==========")
 
     else:
@@ -578,7 +583,7 @@ if __name__ == "__main__":
                 batch, weight = replay_buffer.sample(args.batchsize, args.train_device)
                 stopwatch.time("sample data")
 
-                loss, priority, online_q, _ = agent.loss(batch, args.aux_weight, stat)
+                loss, priority, online_q, _, _ = agent.loss(batch, args.aux_weight, stat)
                 if clone_bot is not None and args.clone_weight > 0:
                     bc_loss = agent.behavior_clone_loss(
                         online_q, batch, args.clone_t, clone_bot, stat

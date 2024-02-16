@@ -111,6 +111,24 @@ class FFWDNet(torch.jit.ScriptModule):
         return q_prob
 
     @torch.jit.script_method
+    def calculate_maxval(
+        self,
+        priv_s: torch.Tensor,
+        legal_move: torch.Tensor,
+        action: torch.Tensor,
+    ) -> torch.Tensor:
+
+        o = self.net(priv_s)
+        a = self.fc_a(o)
+        legal_a = a*legal_move
+        max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).to(dtype=torch.int32)
+        masked_a = (legal_a-legal_a.mean(dim=-1,keepdim=True)) * max_mask
+        act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1)
+        max_mask_count = (act_a>0).mean(dim=0)
+
+        return act_a,max_mask_count
+
+    @torch.jit.script_method
     def calculate_p(
         self,
         priv_s: torch.Tensor,
@@ -259,6 +277,25 @@ class LSTMNet(torch.jit.ScriptModule):
         return q_prob
 
     @torch.jit.script_method
+    def calculate_maxval(
+        self,
+        priv_s: torch.Tensor,
+        legal_move: torch.Tensor,
+        action: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        #legal_a: [ps,a,b,act_dim]
+        #max_mask_count:  [ps,a,b]
+        o = self.net(priv_s)
+        a = self.fc_a(o)
+        legal_a = a*legal_move
+        max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).float()
+        masked_a = (legal_a-legal_a.mean(dim=-1,keepdim=True)) * max_mask
+        act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1)
+        max_mask_count = (act_a>0).float()
+
+        return act_a,max_mask_count
+
+    @torch.jit.script_method
     def calculate_p(
         self,
         priv_s: torch.Tensor,
@@ -396,6 +433,24 @@ class PublicLSTMNet(torch.jit.ScriptModule):
         # action: [seq_len, batch]
 
         return q_prob
+
+    @torch.jit.script_method
+    def calculate_maxval(
+        self,
+        priv_s: torch.Tensor,
+        legal_move: torch.Tensor,
+        action: torch.Tensor,
+    ) -> torch.Tensor:
+
+        o = self.net(priv_s)
+        a = self.fc_a(o)
+        legal_a = a*legal_move
+        max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).to(dtype=torch.int32)
+        masked_a = (legal_a-legal_a.mean(dim=-1,keepdim=True)) * max_mask
+        act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1)
+        max_mask_count = (act_a>0).mean(dim=0)
+
+        return act_a,max_mask_count
 
     @torch.jit.script_method
     def calculate_p(
