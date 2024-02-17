@@ -435,7 +435,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         expand_action = action.unsqueeze(1).expand(action.shape[0],self.play_styles+1,*action.shape[1:]).flatten(1, 2)
 
         total_p_vals = self.online_net.calculate_p(expand_obsinput,expand_legal_move,expand_action,expand_hid)
-        total_p_vals = total_p_vals.reshape(total_p_vals.shape[0],self.play_styles+1,-1)
+        total_p_vals = total_p_vals.reshape(total_p_vals.shape[0],self.play_styles+1,-1)+1e-3
         target_p_vals = total_p_vals[:,0,:]
         res_p_vals = torch.mean(total_p_vals[:,1:,:],dim=1)
         mutual_info = torch.log(target_p_vals/res_p_vals)
