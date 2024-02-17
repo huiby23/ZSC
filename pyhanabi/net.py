@@ -103,7 +103,7 @@ class FFWDNet(torch.jit.ScriptModule):
 
         o = self.net(priv_s)
         a = self.fc_a(o)
-        normed_a = (a - a.mean(dim=-1,keepdim=True))/a.std(dim=-1,keepdim=True)
+        normed_a = a - a.mean(dim=-1,keepdim=True)
         q_prob = nn.functional.softmax(normed_a,dim=-1)
         # q: [(seq_len), batch, num_action]
         # action: [seq_len, batch]
@@ -124,9 +124,8 @@ class FFWDNet(torch.jit.ScriptModule):
         max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).to(dtype=torch.int32)
         masked_a = (legal_a-legal_a.mean(dim=-1,keepdim=True)) * max_mask
         act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1)
-        max_mask_count = (act_a>0).mean(dim=0)
 
-        return act_a,max_mask_count
+        return act_a
 
     @torch.jit.script_method
     def calculate_p(
@@ -138,7 +137,7 @@ class FFWDNet(torch.jit.ScriptModule):
 
         o = self.net(priv_s)
         a = self.fc_a(o)
-        normed_a = (a - a.mean(dim=-1,keepdim=True))/a.std(dim=-1,keepdim=True)
+        normed_a = a - a.mean(dim=-1,keepdim=True)
         q_prob = nn.functional.softmax(normed_a,dim=-1)
         # q: [(seq_len), batch, num_action]
         # action: [seq_len, batch]
@@ -271,8 +270,8 @@ class LSTMNet(torch.jit.ScriptModule):
         x = self.net(priv_s)
         o, _ = self.lstm(x, (hid["h0"], hid["c0"]))
         a = self.fc_a(o)
-        legal_a = (a-a.min(dim=-1,keepdim=True)[0])*legal_move
-        normed_a = (legal_a - legal_a.mean(dim=-1,keepdim=True))/legal_a.std(dim=-1,keepdim=True)
+        legal_a = a*legal_move
+        normed_a = legal_a - legal_a.mean(dim=-1,keepdim=True)
         q_prob = nn.functional.softmax(normed_a,dim=-1)
 
         return q_prob
@@ -285,16 +284,14 @@ class LSTMNet(torch.jit.ScriptModule):
         action: torch.Tensor,
         hid: Dict[str, torch.Tensor],
     ) -> torch.Tensor:
-        #legal_a: [ps,a,b,act_dim]
         x = self.net(priv_s)
         o, _ = self.lstm(x, (hid["h0"], hid["c0"]))
         a = self.fc_a(o)
-        legal_a = a*legal_move
-        max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).float()
-        masked_a = (legal_a-legal_a.mean(dim=-1,keepdim=True)) * max_mask
-        act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1)
-
-        return act_a 
+        legal_a = (1+a-a.min())*legal_move
+        max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).float() 
+        masked_a = legal_a * max_mask #keep max A along the last dimension
+        act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1) 
+        return act_a
 
     @torch.jit.script_method
     def calculate_p(
@@ -308,8 +305,8 @@ class LSTMNet(torch.jit.ScriptModule):
         x = self.net(priv_s)
         o, _ = self.lstm(x, (hid["h0"], hid["c0"]))
         a = self.fc_a(o)
-        legal_a = (a-a.min(dim=-1,keepdim=True)[0])*legal_move
-        normed_a = (legal_a - legal_a.mean(dim=-1,keepdim=True))/legal_a.std(dim=-1,keepdim=True)
+        legal_a = (0.1+a-a.min())*legal_move
+        normed_a = legal_a - legal_a.mean(dim=-1,keepdim=True)
         q_prob = nn.functional.softmax(normed_a,dim=-1)
         # q: [(seq_len), batch, num_action]
         # action: [seq_len, batch]
@@ -431,7 +428,7 @@ class PublicLSTMNet(torch.jit.ScriptModule):
 
         o = self.net(priv_s)
         a = self.fc_a(o)
-        normed_a = (a - a.mean(dim=-1,keepdim=True))/a.std(dim=-1,keepdim=True)
+        normed_a = a - a.mean(dim=-1,keepdim=True)
         q_prob = nn.functional.softmax(normed_a,dim=-1)
         # q: [(seq_len), batch, num_action]
         # action: [seq_len, batch]
@@ -465,7 +462,7 @@ class PublicLSTMNet(torch.jit.ScriptModule):
 
         o = self.net(priv_s)
         a = self.fc_a(o)
-        normed_a = (a - a.mean(dim=-1,keepdim=True))/a.std(dim=-1,keepdim=True)
+        normed_a = a - a.mean(dim=-1,keepdim=True)
         q_prob = nn.functional.softmax(normed_a,dim=-1)
         # q: [(seq_len), batch, num_action]
         # action: [seq_len, batch]
