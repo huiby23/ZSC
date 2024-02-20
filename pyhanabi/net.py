@@ -289,7 +289,7 @@ class LSTMNet(torch.jit.ScriptModule):
         a = self.fc_a(o)
         legal_a = (1+a-a.min())*legal_move
         max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).float() 
-        masked_a = legal_a * max_mask #keep max A along the last dimension
+        masked_a = (legal_a-legal_a.mean(dim=-1,keepdim=True)) * max_mask #keep max A along the last dimension
         act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1) 
         return act_a
 
