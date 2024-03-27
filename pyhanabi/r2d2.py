@@ -401,7 +401,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         act_a = act_a.reshape(priv_s.shape[0],self.play_styles,-1)
         loss_mask = ((onehot_playstyle_expand != expanded_playstyles).sum(dim=-1) != 0).float()
         bin_loss = torch.mean(loss_mask*act_a,dim=1)
-        extra_info = torch.mean((act_a>0).float()).item()
+        extra_info = torch.mean(((loss_mask*act_a)>0).float()).item()
 
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
