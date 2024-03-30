@@ -385,7 +385,6 @@ class R2D2Agent(torch.jit.ScriptModule):
         assert priv_s.dim() == 3
         bin_loss = 0
         extra_info = 0
-        
     
         #老子真服气了，草泥马的，现场再算一遍咯！
         # true_priv_s = torch.cat((priv_s,self.generate_ps(onehot_playstyle)),dim=-1)
@@ -400,16 +399,8 @@ class R2D2Agent(torch.jit.ScriptModule):
             now_priv_s = torch.cat((priv_s,self.generate_ps(now_playstyle)),dim=-1)
             act_a,this_a = self.online_net.calculate_maxval(now_priv_s,obs["legal_move"],action,hid)
             bin_loss += (1-equal_mask)*act_a
-            extra_info += torch.mean((bin_loss>0).float()).item()
-            if aa < 0.01:
-                print('equal_mask>0:', (equal_mask>0).float().mean().item())
-                print('equal_mask>0 and act>0:', (equal_mask*(this_a==action)>0).float().mean().item())
-                print('equal_mask<0 and act>0:', ((1-equal_mask)*(this_a==action)>0).float().mean().item())
+            extra_info += ((1-equal_mask)*(this_a==action)>0).float().mean().item()
         extra_info = extra_info/self.play_styles
-
-
-
-
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
         return bin_loss.sum(dim=0), extra_info
