@@ -389,8 +389,6 @@ class R2D2Agent(torch.jit.ScriptModule):
         expand_hid['c0'] = hid['c0'].unsqueeze(1).expand(hid['c0'].shape[0],self.play_styles,*hid['c0'].shape[1:]).flatten(1, 2)
         expanded_playstyles = self.playstyle_list.unsqueeze(1).unsqueeze(0).expand(onehot_playstyle.shape[0],self.play_styles,*onehot_playstyle.shape[1:])
         onehot_playstyle_expand = onehot_playstyle.unsqueeze(1).expand_as(expanded_playstyles)
-        
-        # priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
         legal_move = obs["legal_move"]
         
         expand_priv_s = priv_s.unsqueeze(1).expand(priv_s.shape[0],self.play_styles,*priv_s.shape[1:])
@@ -400,6 +398,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         act_a = self.online_net.calculate_maxval(expand_obsinput,expand_legal_move,expand_action,expand_hid)
         act_a = act_a.reshape(priv_s.shape[0],self.play_styles,-1)
         loss_mask = ((onehot_playstyle_expand != expanded_playstyles).sum(dim=-1) != 0).float()
+        # shape of act_a: [80,5,128]
         bin_loss = torch.mean(loss_mask*act_a,dim=1)
         extra_info = torch.mean(((loss_mask*act_a)>0).float()).item()
 
