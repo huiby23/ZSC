@@ -122,11 +122,7 @@ class FFWDNet(torch.jit.ScriptModule):
         a = self.fc_a(o)
         legal_a = a*legal_move
         max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).to(dtype=torch.int32)
-        legal_a_nonzero = torch.sum(legal_a>0,dim=-1,keepdim=True)
-        legal_a_sum = legal_a.sum(dim=-1,keepdim=True)
-        legal_a_mean = legal_a_sum/legal_a_nonzero
-        legal_a_diff = legal_a - legal_a_mean
-        masked_a = (legal_a_diff>0) * legal_a * max_mask #keep max A along the last dimension
+        masked_a = legal_a * max_mask #keep max A along the last dimension
         act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1)
 
         return act_a
@@ -293,11 +289,7 @@ class LSTMNet(torch.jit.ScriptModule):
         a = self.fc_a(o)
         legal_a = (1+a-a.min())*legal_move
         max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).float() 
-        legal_a_nonzero = torch.sum(legal_a>0,dim=-1,keepdim=True)
-        legal_a_sum = legal_a.sum(dim=-1,keepdim=True)
-        legal_a_mean = legal_a_sum/legal_a_nonzero
-        legal_a_diff = legal_a - legal_a_mean
-        masked_a = (legal_a_diff>0) * legal_a * max_mask #keep max A along the last dimension
+        masked_a = legal_a * max_mask #keep max A along the last dimension
         act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1) 
         return act_a
 
@@ -455,11 +447,7 @@ class PublicLSTMNet(torch.jit.ScriptModule):
         a = self.fc_a(o)
         legal_a = a*legal_move
         max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).to(dtype=torch.int32)
-        legal_a_nonzero = torch.sum(legal_a>0,dim=-1,keepdim=True)
-        legal_a_sum = legal_a.sum(dim=-1,keepdim=True)
-        legal_a_mean = legal_a_sum/legal_a_nonzero
-        legal_a_diff = legal_a - legal_a_mean
-        masked_a = (legal_a_diff>0) * legal_a * max_mask #keep max A along the last dimension
+        masked_a = legal_a * max_mask #keep max A along the last dimension
         act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1)
 
         return act_a
