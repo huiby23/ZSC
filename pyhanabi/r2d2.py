@@ -549,7 +549,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         agg_priority = self.eta * p_max + (1.0 - self.eta) * p_mean
         return agg_priority
 
-    def loss(self, batch, aux_weight, stat, div_args={'weight':0}):
+    def loss(self, batch, aux_weight, stat, div_args={'calcu_type':0}):
         err, lstm_o, online_q, greedy_a, hid = self.td_error(
             batch.obs,
             batch.h0,
@@ -571,7 +571,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         loss = rl_loss
         extra_info = 0
         extra_loss = 0
-        if div_args['weight'] > 0:
+        if div_args['calcu_type'] == 2:
             if div_args['act_type'] == 0: 
                 input_action = greedy_a
             else:
@@ -583,7 +583,19 @@ class R2D2Agent(torch.jit.ScriptModule):
                 extra_loss, extra_info = self.get_real_mi(batch.obs,input_action,hid)
             elif div_args['div_type'] == 2: # entropy
                 extra_loss, extra_info = self.get_entropy(batch.obs,hid)
-        
+        elif div_args['calcu_type'] == 1:
+            with torch.no_grad():
+                if div_args['act_type'] == 0: 
+                    input_action = greedy_a
+                else:
+                    input_action = batch.action["a"]
+                if div_args['div_type'] == 0: # sim mi
+                    extra_loss, extra_info = self.get_sim_mi(batch.obs,input_action,hid)
+                    extra_loss = - extra_loss
+                elif div_args['div_type'] == 1: # real mi
+                    extra_loss, extra_info = self.get_real_mi(batch.obs,input_action,hid)
+                elif div_args['div_type'] == 2: # entropy
+                    extra_loss, extra_info = self.get_entropy(batch.obs,hid)        
         if aux_weight <= 0:
             return loss, priority, online_q, extra_loss, extra_info
 

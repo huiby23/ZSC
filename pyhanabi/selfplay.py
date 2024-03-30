@@ -119,6 +119,7 @@ def parse_args():
     parser.add_argument("--div_type", type=int, default=0) # 0:sim_mim; 1:real_mim; 2:entropy   
     parser.add_argument("--action_inputtype", type=int, default=0) # 0:greedy action; 1:in batch action
     parser.add_argument("--div_weight", type=float, default=0) 
+    parser.add_argument("--calcu_loss", type=bool, default=False) 
     parser.add_argument("--ps_duplicate", type=int, default=1)
 
     # training setting
@@ -178,8 +179,14 @@ if __name__ == "__main__":
     for dict_key in ['score_mm','score_mp','score_pp','main_rl_loss','partner_rl_loss','partner_extra_loss','partner_extra_info']:
         dict_stats[dict_key] = np.zeros(args.num_epoch)
 
+    if args.div_weight > 0:
+        calcu_type = 2
+    elif args.calcu_loss:
+        calcu_type = 1
+    else:
+        calcu_type = 0
     diversity_args = {
-        'weight': args.div_weight,
+        'calcu_type': calcu_type,
         'act_type': args.action_inputtype,
         'div_type': args.div_type,
     }
