@@ -276,22 +276,40 @@ class LSTMNet(torch.jit.ScriptModule):
 
         return q_prob
 
+
+    @torch.jit.script_method
+    def fuck_action(
+        self,
+        priv_s: torch.Tensor,
+        legal_move: torch.Tensor,
+        hid: Dict[str, torch.Tensor],
+    ) -> torch.Tensor:
+
+        x = self.net(priv_s)
+        o, _ = self.lstm(x, (hid["h0"], hid["c0"]))
+        a = self.fc_a(o)
+        legal_a = (a+1-a.min())*legal_move
+        # q: [(seq_len), batch, num_action]
+        # action: [seq_len, batch]
+        action = legal_a.argmax(-1)
+        return action
+
+
     @torch.jit.script_method
     def calculate_maxval(
         self,
         priv_s: torch.Tensor,
         legal_move: torch.Tensor,
-        action: torch.Tensor,
+        action: torch.Tensor, 
         hid: Dict[str, torch.Tensor],
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         x = self.net(priv_s)
         o, _ = self.lstm(x, (hid["h0"], hid["c0"]))
         a = self.fc_a(o)
         legal_a = (1+a-a.min())*legal_move
-        max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).float() 
-        masked_a = legal_a * max_mask #keep max A along the last dimension
-        act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1) 
-        return act_a
+        act_a = legal_a.gather(-1, action.unsqueeze(-1)).squeeze(-1) 
+        this_a = legal_a.argmax(-1)
+        return act_a, this_a
 
     @torch.jit.script_method
     def calculate_p(
