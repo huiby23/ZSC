@@ -72,7 +72,8 @@ class ActGroup:
             self.actors = []
             assert (method == "iql")
             total_groups = play_params['mm']+play_params['mp']+play_params['pp']
-            if total_groups % num_game_per_thread!= 0:
+            if num_game_per_thread % total_groups != 0:
+                print("total_groups: ", total_groups, "num_game_per_thread: ", num_game_per_thread)
                 print("Error: num_game_per_thread should be divisible by total_groups")
                 exit()
             for i in range(num_thread):
