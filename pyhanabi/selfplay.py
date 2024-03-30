@@ -112,10 +112,10 @@ def parse_args():
     parser.add_argument("--rand_perstep", type=bool, default=False)  
 
     # PBL-encoding training setting
-    parser.add_argument("--training_type", type=int, default=0)
-    # 0 - one main agent and one partner agent, training
-    # 1 - partner vs partner training first, then main vs partner training 
-    # 2 - one main agent and one partner agent, with each round randomly choosing main vs partner or partner vs partner
+    parser.add_argument("--group_mm", type=int, default=1)
+    parser.add_argument("--group_mp", type=int, default=1)
+    parser.add_argument("--group_pp", type=int, default=0)
+
     parser.add_argument("--div_type", type=int, default=0) # 0:sim_mim; 1:real_mim; 2:entropy   
     parser.add_argument("--action_inputtype", type=int, default=0) # 0:greedy action; 1:in batch action
     parser.add_argument("--div_weight", type=float, default=0) 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
-
+    group_params = {'mm':args.group_mm,'mp':args.group_mp, 'pp':args.group_pp}
     logger_path = os.path.join(args.save_dir, "train.log")
     sys.stdout = common_utils.Logger(logger_path)
     saver = common_utils.TopkSaver(args.save_dir, 5)
@@ -285,7 +285,7 @@ if __name__ == "__main__":
             agent_p,
             replay_buffer_p,
             agent_params,
-            split_type=args.training_type,
+            play_params=group_params,
         )
 
         context, threads = create_threads(
