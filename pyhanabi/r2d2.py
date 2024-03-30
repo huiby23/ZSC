@@ -383,32 +383,24 @@ class R2D2Agent(torch.jit.ScriptModule):
         assert (self.play_styles > 0)
         onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
         assert priv_s.dim() == 3
-        bin_loss = 0
-        extra_info = 0
+        expand_hid = {}
+
+        expand_hid['h0'] = hid['h0'].unsqueeze(1).expand(hid['h0'].shape[0],self.play_styles,*hid['h0'].shape[1:]).flatten(1, 2)
+        expand_hid['c0'] = hid['c0'].unsqueeze(1).expand(hid['c0'].shape[0],self.play_styles,*hid['c0'].shape[1:]).flatten(1, 2)
+        expanded_playstyles = self.playstyle_list.unsqueeze(1).unsqueeze(0).expand(onehot_playstyle.shape[0],self.play_styles,*onehot_playstyle.shape[1:])
+        onehot_playstyle_expand = onehot_playstyle.unsqueeze(1).expand_as(expanded_playstyles)
+        legal_move = obs["legal_move"]
         
-    
-        #老子真服气了，草泥马的，现场再算一遍咯！
-        # true_priv_s = torch.cat((priv_s,self.generate_ps(onehot_playstyle)),dim=-1)
-        # new_action = self.online_net.fuck_action(true_priv_s,obs["legal_move"],hid)
-        # print('action diff:', (new_action!=action).float().mean().item())
-        # act_a_raw = self.online_net.calculate_maxval(true_priv_s,obs["legal_move"],action,hid)
-        # print('act_a_raw:', (act_a_raw>0).float().mean().item())
-        aa = torch.rand(1)
-        for idx in range(self.play_styles):
-            now_playstyle = self.playstyle_list[idx,:].unsqueeze(0).expand_as(onehot_playstyle)
-            equal_mask = ((now_playstyle!= onehot_playstyle).sum(dim=-1)==0).float()
-            now_priv_s = torch.cat((priv_s,self.generate_ps(now_playstyle)),dim=-1)
-            act_a,this_a = self.online_net.calculate_maxval(now_priv_s,obs["legal_move"],action,hid)
-            bin_loss += (1-equal_mask)*act_a
-            extra_info += torch.mean((bin_loss>0).float()).item()
-            if aa < 0.01:
-                print('equal_mask>0:', (equal_mask>0).float().mean().item())
-                print('equal_mask>0 and act>0:', (equal_mask*(this_a==action)>0).float().mean().item())
-                print('equal_mask<0 and act>0:', ((1-equal_mask)*(this_a==action)>0).float().mean().item())
-        extra_info = extra_info/self.play_styles
-
-
-
+        expand_priv_s = priv_s.unsqueeze(1).expand(priv_s.shape[0],self.play_styles,*priv_s.shape[1:])
+        expand_legal_move = legal_move.unsqueeze(1).expand(legal_move.shape[0],self.play_styles,*legal_move.shape[1:]).flatten(1, 2)
+        expand_action = action.unsqueeze(1).expand(action.shape[0],self.play_styles,*action.shape[1:]).flatten(1, 2)
+        expand_obsinput = torch.cat((expand_priv_s,self.generate_ps(expanded_playstyles)),-1).flatten(1, 2)
+        act_a = self.online_net.calculate_maxval(expand_obsinput,expand_legal_move,expand_action,expand_hid)
+        act_a = act_a.reshape(priv_s.shape[0],self.play_styles,-1)
+        loss_mask = ((onehot_playstyle_expand != expanded_playstyles).sum(dim=-1) != 0).float()
+        # shape of act_a: [80,5,128]
+        bin_loss = torch.mean(loss_mask*act_a,dim=1)
+        extra_info = torch.mean(((loss_mask*act_a)>0).float()).item()
 
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
