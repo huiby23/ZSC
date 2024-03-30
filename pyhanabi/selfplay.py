@@ -267,8 +267,7 @@ if __name__ == "__main__":
         
         print('Agent initialization complete. Disable parameter sharing.')
         agent_params = {'play_styles':args.play_styles, 'rand_perstep':args.rand_perstep}
-
-        print('type ',args.training_type,' population based training')
+        
         act_group = ActGroup(
             args.act_device,
             agent,
