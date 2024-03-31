@@ -119,7 +119,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         if self.ps_duplicate == 1:
             return in_tensor
         else:
-            return in_tensor.repeat_interleave(self.play_styles, dim=-1) 
+            return in_tensor.repeat_interleave(self.ps_duplicate, dim=-1) 
 
     def clone(self, device, overwrite=None):
         if overwrite is None:
@@ -386,12 +386,6 @@ class R2D2Agent(torch.jit.ScriptModule):
         bin_loss = 0
         extra_info = 0
     
-        #老子真服气了，草泥马的，现场再算一遍咯！
-        # true_priv_s = torch.cat((priv_s,self.generate_ps(onehot_playstyle)),dim=-1)
-        # new_action = self.online_net.fuck_action(true_priv_s,obs["legal_move"],hid)
-        # print('action diff:', (new_action!=action).float().mean().item())
-        # act_a_raw = self.online_net.calculate_maxval(true_priv_s,obs["legal_move"],action,hid)
-        # print('act_a_raw:', (act_a_raw>0).float().mean().item())
         aa = torch.rand(1)
         for idx in range(self.play_styles):
             now_playstyle = self.playstyle_list[idx,:].unsqueeze(0).expand_as(onehot_playstyle)

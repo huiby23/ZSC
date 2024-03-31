@@ -276,25 +276,6 @@ class LSTMNet(torch.jit.ScriptModule):
 
         return q_prob
 
-
-    @torch.jit.script_method
-    def fuck_action(
-        self,
-        priv_s: torch.Tensor,
-        legal_move: torch.Tensor,
-        hid: Dict[str, torch.Tensor],
-    ) -> torch.Tensor:
-
-        x = self.net(priv_s)
-        o, _ = self.lstm(x, (hid["h0"], hid["c0"]))
-        a = self.fc_a(o)
-        legal_a = (a+1-a.min())*legal_move
-        # q: [(seq_len), batch, num_action]
-        # action: [seq_len, batch]
-        action = legal_a.argmax(-1)
-        return action
-
-
     @torch.jit.script_method
     def calculate_maxval(
         self,
