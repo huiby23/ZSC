@@ -397,9 +397,9 @@ class R2D2Agent(torch.jit.ScriptModule):
             now_playstyle = self.playstyle_list[idx,:].unsqueeze(0).expand_as(onehot_playstyle)
             equal_mask = ((now_playstyle!= onehot_playstyle).sum(dim=-1)==0).float()
             now_priv_s = torch.cat((priv_s,self.generate_ps(now_playstyle)),dim=-1)
-            act_a,this_a = self.online_net.calculate_maxval(now_priv_s,obs["legal_move"],action,hid)
-            bin_loss += (1-equal_mask)*act_a
-            extra_info += ((1-equal_mask)*(this_a==action)>0).float().mean().item()
+            target_val,this_a = self.online_net.calculate_maxval(now_priv_s,obs["legal_move"],hid)
+            bin_loss += (1-equal_mask)*(this_a==action).float()*target_val
+            extra_info += ((1-equal_mask)*(this_a==action).float()).mean().item()
         extra_info = extra_info/self.play_styles
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
