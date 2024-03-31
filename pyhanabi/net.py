@@ -300,16 +300,16 @@ class LSTMNet(torch.jit.ScriptModule):
         self,
         priv_s: torch.Tensor,
         legal_move: torch.Tensor,
-        action: torch.Tensor, 
         hid: Dict[str, torch.Tensor],
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         x = self.net(priv_s)
         o, _ = self.lstm(x, (hid["h0"], hid["c0"]))
         a = self.fc_a(o)
         legal_a = (1+a-a.min())*legal_move
-        act_a = legal_a.gather(-1, action.unsqueeze(-1)).squeeze(-1) 
-        this_a = legal_a.argmax(-1)
-        return act_a, this_a
+        values, indices = torch.topk(legal_a, 2, dim=-1, largest=True, sorted=True)
+        target_val = values[:,:,0] - values[:,:,1]
+        this_a = indices[:, :, 0]
+        return target_val, this_a
 
     @torch.jit.script_method
     def calculate_p(
