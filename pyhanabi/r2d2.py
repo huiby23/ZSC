@@ -50,20 +50,14 @@ class R2D2Agent(torch.jit.ScriptModule):
         adv_type=0,
         adv_ratio=0,
         play_styles=0,
-        ps_duplicate=1,
     ):
         super().__init__()
         self.play_styles = play_styles
         self.indim = in_dim
-        self.ps_duplicate = ps_duplicate
         #print('Init r2d2agent, indim:', in_dim, 'play_style_embedding_dim:',self.play_style_embedding_dim)
-        in_dim_list = [in_dim[0],in_dim[1]+ps_duplicate*play_styles,in_dim[2]]
+        in_dim_list = [in_dim[0],in_dim[1],in_dim[2]]
 
         in_dim = in_dim_list
-
-        if self.play_styles > 0:
-            # generate tensors for backup 
-            self.playstyle_list = torch.eye(play_styles).to(device)
 
         if net == "ffwd":
             self.online_net = FFWDNet(in_dim, hid_dim, out_dim).to(device)
@@ -77,10 +71,10 @@ class R2D2Agent(torch.jit.ScriptModule):
             ).to(device)
         elif net == "lstm":
             self.online_net = LSTMNet(
-                device, in_dim, hid_dim, out_dim, num_lstm_layer
+                device, in_dim, hid_dim, out_dim, num_lstm_layer, self.play_styles
             ).to(device)
             self.target_net = LSTMNet(
-                device, in_dim, hid_dim, out_dim, num_lstm_layer
+                device, in_dim, hid_dim, out_dim, num_lstm_layer, self.play_styles
             ).to(device)
         elif net == "transformer":
             self.online_net = TransformerNet(
@@ -115,12 +109,6 @@ class R2D2Agent(torch.jit.ScriptModule):
     def get_h0(self, batchsize: int) -> Dict[str, torch.Tensor]:
         return self.online_net.get_h0(batchsize)
 
-    def generate_ps(self, in_tensor):
-        if self.ps_duplicate == 1:
-            return in_tensor
-        else:
-            return in_tensor.repeat_interleave(self.ps_duplicate, dim=-1) 
-
     def clone(self, device, overwrite=None):
         if overwrite is None:
             overwrite = {}
@@ -145,7 +133,6 @@ class R2D2Agent(torch.jit.ScriptModule):
             nlayer=self.nlayer,
             max_len=self.max_len,
             play_styles=self.play_styles,
-            ps_duplicate=self.ps_duplicate,
         )
         cloned.load_state_dict(self.state_dict())
         cloned.train(self.training)
@@ -159,10 +146,11 @@ class R2D2Agent(torch.jit.ScriptModule):
         self,
         priv_s: torch.Tensor,
         publ_s: torch.Tensor,
+        playstyle_s: torch.Tensor,
         legal_move: torch.Tensor,
         hid: Dict[str, torch.Tensor],
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], torch.Tensor]:
-        adv, new_hid = self.online_net.act(priv_s, publ_s, hid)
+        adv, new_hid = self.online_net.act(priv_s, publ_s, playstyle_s, hid)
         legal_adv = (1 + adv - adv.min()) * legal_move
         greedy_action = legal_adv.argmax(1).detach()
         return greedy_action, new_hid, legal_adv.detach()
@@ -177,7 +165,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         hid: Dict[str, torch.Tensor],
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], torch.Tensor]:
         temperature = temperature.unsqueeze(1)
-        adv, new_hid = self.online_net.act(priv_s, publ_s, hid)
+        adv, new_hid = self.online_net.act(priv_s, publ_s, publ_s, hid)
         assert adv.dim() == temperature.dim()
         logit = adv / temperature
         legal_logit = logit - (1 - legal_move) * 1e30
@@ -194,9 +182,10 @@ class R2D2Agent(torch.jit.ScriptModule):
             [batchsize] or [batchsize, num_player]
         """
         priv_s = obs["priv_s"]
-        if self.play_styles > 0:
-            onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
-            priv_s = torch.cat((priv_s,self.generate_ps(onehot_playstyle)),dim=-1)
+        if "playStyle" in obs.keys():
+            playstyle_s = obs["playStyle"]
+        else:
+            playstyle_s = priv_s # to keep consistency with the input size of the network
         publ_s = obs["publ_s"]
         legal_move = obs["legal_move"]
         if "eps" in obs:
@@ -229,7 +218,7 @@ class R2D2Agent(torch.jit.ScriptModule):
                 rand = (rand < eps).float()
                 action = (greedy_action * (1 - rand) + random_action * rand).detach().long()                
         else:
-            greedy_action, new_hid, legal_adv = self.greedy_act(priv_s, publ_s, legal_move, hid)
+            greedy_action, new_hid, legal_adv = self.greedy_act(priv_s, publ_s, playstyle_s, legal_move, hid)
             reply = {}
             if self.greedy:
                 action = greedy_action
@@ -278,9 +267,6 @@ class R2D2Agent(torch.jit.ScriptModule):
     ) -> Dict[str, torch.Tensor]:
         assert self.multi_step == 1
         priv_s = input_["priv_s"]
-        if self.play_styles > 0:
-            onehot_playstyle = nn.functional.one_hot(input_["playStyle"],num_classes=self.play_styles).float()
-            priv_s = torch.cat((priv_s,self.generate_ps(onehot_playstyle)),dim=-1)
         publ_s = input_["publ_s"]
         legal_move = input_["legal_move"]
         act_hid = {
@@ -299,11 +285,11 @@ class R2D2Agent(torch.jit.ScriptModule):
             next_a, _, next_pa = self.boltzmann_act(
                 priv_s, publ_s, legal_move, temp, act_hid
             )
-            next_q = self.target_net(priv_s, publ_s, legal_move, next_a, fwd_hid)[2]
+            next_q = self.target_net(priv_s, publ_s, publ_s, legal_move, next_a, fwd_hid)[2]
             qa = (next_q * next_pa).sum(1)
         else:
-            next_a = self.greedy_act(priv_s, publ_s, legal_move, act_hid)[0]
-            qa = self.target_net(priv_s, publ_s, legal_move, next_a, fwd_hid)[0]
+            next_a = self.greedy_act(priv_s, publ_s, publ_s, legal_move, act_hid)[0]
+            qa = self.target_net(priv_s, publ_s, publ_s, legal_move, next_a, fwd_hid)[0]
 
         assert reward.size() == qa.size()
         target = reward + (1 - terminal) * self.gamma * qa
@@ -340,7 +326,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         terminal = input_["terminal"]
         bootstrap = input_["bootstrap"]
         seq_len = input_["seq_len"]
-        err, _, _, _, _ = self.td_error(
+        err, _, _, _, _, _ = self.td_error(
             obs, hid, action, reward, terminal, bootstrap, seq_len
         )
         priority = err.abs()
@@ -445,12 +431,13 @@ class R2D2Agent(torch.jit.ScriptModule):
         terminal: torch.Tensor,
         bootstrap: torch.Tensor,
         seq_len: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, Dict[str, torch.Tensor], torch.Tensor]:
         max_seq_len = obs["priv_s"].size(0)
         priv_s = obs["priv_s"]
-        if self.play_styles > 0:
-            onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
-            priv_s = torch.cat((priv_s,self.generate_ps(onehot_playstyle)),dim=-1)
+        if "playStyle" in obs.keys():
+            playstyle_s = obs["playStyle"]
+        else:
+            playstyle_s = priv_s
         publ_s = obs["publ_s"]
         legal_move = obs["legal_move"]
         action = action["a"]
@@ -467,15 +454,15 @@ class R2D2Agent(torch.jit.ScriptModule):
 
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
-        online_qa, greedy_a, online_q, lstm_o = self.online_net(
-            priv_s, publ_s, legal_move, action, hid
+        online_qa, greedy_a, online_q, lstm_o, a_stack = self.online_net(
+            priv_s, publ_s, playstyle_s, legal_move, action, hid
         )
 
         if self.off_belief:
             target = obs["target"]
         else:
-            target_qa, _, target_q, _ = self.target_net(
-                priv_s, publ_s, legal_move, greedy_a, hid
+            target_qa, _, target_q, _, _ = self.target_net(
+                priv_s, publ_s, playstyle_s, legal_move, greedy_a, hid
             )
 
             if self.boltzmann:
@@ -509,7 +496,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         err = (target.detach() - online_qa) * mask
         if self.off_belief and "valid_fict" in obs:
             err = err * obs["valid_fict"]
-        return err, lstm_o, online_q, greedy_a, hid
+        return err, lstm_o, online_q, greedy_a, hid, a_stack
 
     def aux_task_iql(self, lstm_o, hand, seq_len, rl_loss_size, stat):
         seq_size, bsize, _ = hand.size()
@@ -542,7 +529,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         return agg_priority
 
     def loss(self, batch, aux_weight, stat, div_args={'calcu_type':0}):
-        err, lstm_o, online_q, greedy_a, hid = self.td_error(
+        err, lstm_o, online_q, greedy_a, hid, a_stack = self.td_error(
             batch.obs,
             batch.h0,
             batch.action,
@@ -572,7 +559,7 @@ class R2D2Agent(torch.jit.ScriptModule):
                 extra_loss, extra_info = self.get_sim_mi(batch.obs,input_action,hid)
                 extra_loss = - extra_loss
             elif div_args['div_type'] == 1: # real mi
-                extra_loss, extra_info = self.get_real_mi(batch.obs,input_action,hid)
+                extra_loss, extra_info = self.get_real_mi(batch.obs,input_action,hid,a_stack)
             elif div_args['div_type'] == 2: # entropy
                 extra_loss, extra_info = self.get_entropy(batch.obs,hid)
         elif div_args['calcu_type'] == 1:
@@ -616,9 +603,6 @@ class R2D2Agent(torch.jit.ScriptModule):
     def behavior_clone_loss(self, online_q, batch, t, clone_bot, stat):
         max_seq_len = batch.obs["priv_s"].size(0)
         priv_s = batch.obs["priv_s"]
-        if self.play_styles > 0:
-            onehot_playstyle = nn.functional.one_hot(batch.obs["playStyle"],num_classes=self.play_styles).float()
-            priv_s = torch.cat((priv_s,self.generate_ps(onehot_playstyle)),dim=-1)
         publ_s = batch.obs["publ_s"]
         legal_move = batch.obs["legal_move"]
 
