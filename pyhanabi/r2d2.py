@@ -53,6 +53,7 @@ class R2D2Agent(torch.jit.ScriptModule):
     ):
         super().__init__()
         self.play_styles = play_styles
+        self.playstyle_list = torch.arange(self.play_styles).to(device)
         self.indim = in_dim
         #print('Init r2d2agent, indim:', in_dim, 'play_style_embedding_dim:',self.play_style_embedding_dim)
         in_dim_list = [in_dim[0],in_dim[1],in_dim[2]]
@@ -89,6 +90,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         for p in self.target_net.parameters():
             p.requires_grad = False
 
+        self.num_action = out_dim
         self.vdn = vdn
         self.multi_step = multi_step
         self.gamma = gamma
@@ -359,31 +361,34 @@ class R2D2Agent(torch.jit.ScriptModule):
         # i.e. no terminal in the middle
         return entropy.sum(dim=0), entropy.mean().item()
 
+    @torch.jit.script_method
     def get_real_mi(
         self,
         obs: Dict[str, torch.Tensor],
-        action: torch.Tensor,
-        hid: Dict[str, torch.Tensor],
+        action: torch.Tensor, # shape: [seq_len, batch]
+        a_stack: torch.Tensor, # shape: [seq_len, batch, num_action, num_playstyle]
+        use_max_val_mask: bool,
     ):
-        priv_s = obs["priv_s"]
-        assert (self.play_styles > 0)
-        onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
-        assert priv_s.dim() == 3
-        bin_loss = 0
-        extra_info = 0
-    
-        aa = torch.rand(1)
-        for idx in range(self.play_styles):
-            now_playstyle = self.playstyle_list[idx,:].unsqueeze(0).expand_as(onehot_playstyle)
-            equal_mask = ((now_playstyle!= onehot_playstyle).sum(dim=-1)==0).float()
-            now_priv_s = torch.cat((priv_s,self.generate_ps(now_playstyle)),dim=-1)
-            target_val,this_a = self.online_net.calculate_maxval(now_priv_s,obs["legal_move"],hid)
-            bin_loss += (1-equal_mask)*(this_a==action).float()*target_val
-            extra_info += ((1-equal_mask)*(this_a==action).float()).mean().item()
-        extra_info = extra_info/self.play_styles
+        action_inuse = action[0,:] # shape: [batch]
+        a_stack_inuse = a_stack[0,:] # shape: [batch, num_action, num_playstyle]
+        playstyle_inuse = obs["playStyle"][0,:] # shape: [batch]
+        
+        action_mask = nn.functional.one_hot(action_inuse,num_classes=self.num_action).float().unsqueeze(-1) # shape: [batch, num_action, 1]
+        target_loc_q = (a_stack_inuse*action_mask).sum(1) # action location q values, shape: [batch, num_playstyle]
+        greedy_act_val, greedy_act_idx = a_stack_inuse.max(dim=1) # shape: [batch, num_playstyle]
+        
+        diffrent_playstyle_mask = 1 - (playstyle_inuse.unsqueeze(1).expand(-1,self.play_styles) == self.playstyle_list.unsqueeze(0)).float() # shape: [batch, num_playstyle]
+        if use_max_val_mask:
+            max_val_mask = (greedy_act_val == target_loc_q).float() # shape: [batch, num_playstyle]
+            minimize_target = max_val_mask * target_loc_q * diffrent_playstyle_mask
+        else:
+            minimize_target = target_loc_q * diffrent_playstyle_mask
+        different_ps_same_act = (action_inuse.unsqueeze(1) == greedy_act_idx).float() * diffrent_playstyle_mask
+
+        extra_info = different_ps_same_act.mean().item()
         # this only works because the trajectories are padded,
         # i.e. no terminal in the middle
-        return bin_loss.sum(dim=0), extra_info
+        return torch.mean(minimize_target), extra_info
 
     def get_sim_mi(
         self,
@@ -493,6 +498,7 @@ class R2D2Agent(torch.jit.ScriptModule):
 
         mask = torch.arange(0, max_seq_len, device=seq_len.device)
         mask = (mask.unsqueeze(1) < seq_len.unsqueeze(0)).float()
+
         err = (target.detach() - online_qa) * mask
         if self.off_belief and "valid_fict" in obs:
             err = err * obs["valid_fict"]
@@ -538,6 +544,7 @@ class R2D2Agent(torch.jit.ScriptModule):
             batch.bootstrap,
             batch.seq_len,
         )
+
         rl_loss = nn.functional.smooth_l1_loss(
             err, torch.zeros_like(err), reduction="none"
         )
@@ -559,7 +566,7 @@ class R2D2Agent(torch.jit.ScriptModule):
                 extra_loss, extra_info = self.get_sim_mi(batch.obs,input_action,hid)
                 extra_loss = - extra_loss
             elif div_args['div_type'] == 1: # real mi
-                extra_loss, extra_info = self.get_real_mi(batch.obs,input_action,hid,a_stack)
+                extra_loss, extra_info = self.get_real_mi(batch.obs,input_action,a_stack,div_args['max_val_mask'])
             elif div_args['div_type'] == 2: # entropy
                 extra_loss, extra_info = self.get_entropy(batch.obs,hid)
         elif div_args['calcu_type'] == 1:
@@ -572,7 +579,7 @@ class R2D2Agent(torch.jit.ScriptModule):
                     extra_loss, extra_info = self.get_sim_mi(batch.obs,input_action,hid)
                     extra_loss = - extra_loss
                 elif div_args['div_type'] == 1: # real mi
-                    extra_loss, extra_info = self.get_real_mi(batch.obs,input_action,hid)
+                    extra_loss, extra_info = self.get_real_mi(batch.obs,input_action,a_stack,div_args['max_val_mask'])
                 elif div_args['div_type'] == 2: # entropy
                     extra_loss, extra_info = self.get_entropy(batch.obs,hid)        
         if aux_weight <= 0:

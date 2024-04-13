@@ -111,23 +111,6 @@ class FFWDNet(torch.jit.ScriptModule):
         return q_prob
 
     @torch.jit.script_method
-    def calculate_maxval(
-        self,
-        priv_s: torch.Tensor,
-        legal_move: torch.Tensor,
-        action: torch.Tensor,
-    ) -> torch.Tensor:
-
-        o = self.net(priv_s)
-        a = self.fc_a(o)
-        legal_a = a*legal_move
-        max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).to(dtype=torch.int32)
-        masked_a = legal_a * max_mask #keep max A along the last dimension
-        act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1)
-
-        return act_a
-
-    @torch.jit.script_method
     def calculate_p(
         self,
         priv_s: torch.Tensor,
@@ -288,22 +271,6 @@ class LSTMNet(torch.jit.ScriptModule):
         return q_prob
 
     @torch.jit.script_method
-    def calculate_maxval(
-        self,
-        priv_s: torch.Tensor,
-        legal_move: torch.Tensor,
-        hid: Dict[str, torch.Tensor],
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        x = self.net(priv_s)
-        o, _ = self.lstm(x, (hid["h0"], hid["c0"]))
-        a = self.fc_a(o)
-        legal_a = (1+a-a.min())*legal_move
-        values, indices = torch.topk(legal_a, 2, dim=-1, largest=True, sorted=True)
-        target_val = values[:,:,0] - values[:,:,1]
-        this_a = indices[:, :, 0]
-        return target_val, this_a
-
-    @torch.jit.script_method
     def calculate_p(
         self,
         priv_s: torch.Tensor,
@@ -354,14 +321,15 @@ class LSTMNet(torch.jit.ScriptModule):
         if self.play_styles == 0:
             a = self.fc_a(o) # shape: [seq_len, batch, num_action]
             v = self.fc_v(o)
-            a_stack = a # to keep return value consistent with multi-playstyle case 
+            a_stack_ret = a # to keep return value consistent with multi-playstyle case 
         else:
             a_group = [module(o) for i, module in enumerate(self.fc_as)]
             a_stack = torch.stack(a_group, dim=-1) # shape: [seq_len, batch, num_action, num_playstyle]
-            assert a_stack.dim() == 4 # [seq_len, batch, 1, num_playstyle]
+            assert a_stack.dim() == 4
             onehot_playstyle = nn.functional.one_hot(playstyle_s,num_classes=self.play_styles).float().unsqueeze(-2) # [seq_len, batch,1, num_playstyle]
             a = (a_stack * onehot_playstyle).sum(dim=-1) # shape: [seq_len, batch, num_action]
             v = self.fc_v(o)
+            a_stack_ret = (a_stack + 1 - a_stack.min()) * legal_move.unsqueeze(-1)
         q = duel(v, a, legal_move)
 
         # q: [seq_len, batch, num_action]
@@ -372,13 +340,12 @@ class LSTMNet(torch.jit.ScriptModule):
         legal_q = (1 + q - q.min()) * legal_move
         # greedy_action: [seq_len, batch]
         greedy_action = legal_q.argmax(2).detach()
-
         if one_step:
             qa = qa.squeeze(0)
             greedy_action = greedy_action.squeeze(0)
             o = o.squeeze(0)
             q = q.squeeze(0)
-        return qa, greedy_action, q, o, a_stack
+        return qa, greedy_action, q, o, a_stack_ret
 
     def pred_loss_1st(self, lstm_o, target, hand_slot_mask, seq_len):
         return cross_entropy(self.pred_1st, lstm_o, target, hand_slot_mask, seq_len)
@@ -454,23 +421,6 @@ class PublicLSTMNet(torch.jit.ScriptModule):
         # action: [seq_len, batch]
 
         return q_prob
-
-    @torch.jit.script_method
-    def calculate_maxval(
-        self,
-        priv_s: torch.Tensor,
-        legal_move: torch.Tensor,
-        action: torch.Tensor,
-    ) -> torch.Tensor:
-
-        o = self.net(priv_s)
-        a = self.fc_a(o)
-        legal_a = a*legal_move
-        max_mask = (legal_a == legal_a.max(dim=-1,keepdim=True)[0]).to(dtype=torch.int32)
-        masked_a = legal_a * max_mask #keep max A along the last dimension
-        act_a = masked_a.gather(-1, action.unsqueeze(-1)).squeeze(-1)
-
-        return act_a
 
     @torch.jit.script_method
     def calculate_p(

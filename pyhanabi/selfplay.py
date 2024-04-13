@@ -120,6 +120,7 @@ def parse_args():
     parser.add_argument("--action_inputtype", type=int, default=0) # 0:greedy action; 1:in batch action
     parser.add_argument("--div_weight", type=float, default=0) 
     parser.add_argument("--calcu_loss", type=bool, default=False) 
+    parser.add_argument("--max_val_mask", type=bool, default=False) 
 
     # training setting
     args = parser.parse_args()
@@ -188,6 +189,7 @@ if __name__ == "__main__":
         'calcu_type': calcu_type,
         'act_type': args.action_inputtype,
         'div_type': args.div_type,
+        'max_val_mask': args.max_val_mask,
     }
 
     if args.no_sharing:
@@ -357,8 +359,7 @@ if __name__ == "__main__":
                 #         count_ps = torch.sum(obs["playStyle"]==idx)
                 #         print(f"playstyle {idx} count: {count_ps}")
                 loss_p, priority_p, online_q_p, extra_loss, extra_info = agent_p.loss(batch_p, args.aux_weight, stat_p, diversity_args)
-                loss_p = (loss_p * weight).mean()
-                extra_loss = torch.mean(extra_loss * weight)
+                loss_p = (loss_p * weight_p).mean()
                 raw_loss_list.append(loss_p.item())
                 extra_loss_list.append(extra_loss.item())
                 extra_info_list.append(extra_info)
