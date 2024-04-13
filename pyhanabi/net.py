@@ -177,11 +177,10 @@ class FFWDNet(torch.jit.ScriptModule):
     def pred_loss_1st(self, o, target, hand_slot_mask, seq_len):
         return cross_entropy(self.pred_1st, o, target, hand_slot_mask, seq_len)
 
-
 class LSTMNet(torch.jit.ScriptModule):
     __constants__ = ["hid_dim", "out_dim", "num_lstm_layer"]
 
-    def __init__(self, device, in_dim, hid_dim, out_dim, num_lstm_layer):
+    def __init__(self, device, in_dim, hid_dim, out_dim, num_lstm_layer, play_styles=0):
         super().__init__()
         # for backward compatibility
         if isinstance(in_dim, int):
@@ -193,7 +192,7 @@ class LSTMNet(torch.jit.ScriptModule):
             self.in_dim = in_dim
             self.priv_in_dim = in_dim[1]
             self.publ_in_dim = in_dim[2]
-
+        self.play_styles = play_styles
         self.hid_dim = hid_dim
         self.out_dim = out_dim
         self.num_ff_layer = 1
@@ -210,9 +209,13 @@ class LSTMNet(torch.jit.ScriptModule):
             num_layers=self.num_lstm_layer,
         ).to(device)
         self.lstm.flatten_parameters()
-
         self.fc_v = nn.Linear(self.hid_dim, 1)
-        self.fc_a = nn.Linear(self.hid_dim, self.out_dim)
+        if self.play_styles == 0:
+            self.fc_a = nn.Linear(self.hid_dim, self.out_dim)
+            self.fc_as = nn.ModuleList([nn.Linear(2, 2)]) # to keep consistensy
+        else:
+            self.fc_a = nn.Linear(2, 2)
+            self.fc_as = nn.ModuleList([nn.Linear(self.hid_dim, self.out_dim) for _ in range(self.play_styles)])
 
         # for aux task
         self.pred_1st = nn.Linear(self.hid_dim, 5 * 3)
@@ -228,9 +231,10 @@ class LSTMNet(torch.jit.ScriptModule):
         self,
         priv_s: torch.Tensor,
         publ_s: torch.Tensor,
+        playstyle_s: torch.Tensor,
         hid: Dict[str, torch.Tensor],
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        assert priv_s.dim() == 2
+        assert priv_s.dim() == 2 # batchsize, input_size
 
         bsize = hid["h0"].size(0)
         assert hid["h0"].dim() == 4
@@ -242,10 +246,17 @@ class LSTMNet(torch.jit.ScriptModule):
         }
         priv_s = priv_s.unsqueeze(0)
         x = self.net(priv_s)
-        o, (h, c) = self.lstm(x, (hid["h0"], hid["c0"]))
-        a = self.fc_a(o)
-        a = a.squeeze(0)
-
+        o, (h, c) = self.lstm(x, (hid["h0"], hid["c0"])) # o shape: [1, batch, dim]
+        if self.play_styles == 0:
+            a = self.fc_a(o)
+            a = a.squeeze(0)
+        else:
+            o = o.squeeze(0)
+            a_group = [module(o) for i, module in enumerate(self.fc_as)]
+            a_stack = torch.stack(a_group, dim=-1) # shape: [batch, num_action, num_playstyle]
+            assert playstyle_s.dim() == 1 # [batch,1]
+            onehot_playstyle = nn.functional.one_hot(playstyle_s,num_classes=self.play_styles).float().unsqueeze(-2) # [batch, 1, num_playstyle]
+            a = (a_stack * onehot_playstyle).sum(dim=-1) # shape: [batch, num_action]
         # hid size: [num_layer, batch x num_player, dim]
         # -> [batch, num_layer, num_player, dim]
         interim_hid_shape = (
@@ -318,10 +329,11 @@ class LSTMNet(torch.jit.ScriptModule):
         self,
         priv_s: torch.Tensor,
         publ_s: torch.Tensor,
+        playstyle_s: torch.Tensor,
         legal_move: torch.Tensor,
         action: torch.Tensor,
         hid: Dict[str, torch.Tensor],
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         assert (
             priv_s.dim() == 3 or priv_s.dim() == 2
         ), "dim = 3/2, [seq_len(optional), batch, dim]"
@@ -339,8 +351,17 @@ class LSTMNet(torch.jit.ScriptModule):
             o, _ = self.lstm(x)
         else:
             o, _ = self.lstm(x, (hid["h0"], hid["c0"]))
-        a = self.fc_a(o)
-        v = self.fc_v(o)
+        if self.play_styles == 0:
+            a = self.fc_a(o) # shape: [seq_len, batch, num_action]
+            v = self.fc_v(o)
+            a_stack = a # to keep return value consistent with multi-playstyle case 
+        else:
+            a_group = [module(o) for i, module in enumerate(self.fc_as)]
+            a_stack = torch.stack(a_group, dim=-1) # shape: [seq_len, batch, num_action, num_playstyle]
+            assert a_stack.dim() == 4 # [seq_len, batch, 1, num_playstyle]
+            onehot_playstyle = nn.functional.one_hot(playstyle_s,num_classes=self.play_styles).float().unsqueeze(-2) # [seq_len, batch,1, num_playstyle]
+            a = (a_stack * onehot_playstyle).sum(dim=-1) # shape: [seq_len, batch, num_action]
+            v = self.fc_v(o)
         q = duel(v, a, legal_move)
 
         # q: [seq_len, batch, num_action]
@@ -357,7 +378,7 @@ class LSTMNet(torch.jit.ScriptModule):
             greedy_action = greedy_action.squeeze(0)
             o = o.squeeze(0)
             q = q.squeeze(0)
-        return qa, greedy_action, q, o
+        return qa, greedy_action, q, o, a_stack
 
     def pred_loss_1st(self, lstm_o, target, hand_slot_mask, seq_len):
         return cross_entropy(self.pred_1st, lstm_o, target, hand_slot_mask, seq_len)

@@ -120,7 +120,6 @@ def parse_args():
     parser.add_argument("--action_inputtype", type=int, default=0) # 0:greedy action; 1:in batch action
     parser.add_argument("--div_weight", type=float, default=0) 
     parser.add_argument("--calcu_loss", type=bool, default=False) 
-    parser.add_argument("--ps_duplicate", type=int, default=1)
 
     # training setting
     args = parser.parse_args()
@@ -228,7 +227,6 @@ if __name__ == "__main__":
             adv_type=args.adv_type,
             adv_ratio=args.adv_ratio,
             play_styles=args.play_styles,
-            ps_duplicate=args.ps_duplicate,
         )
         agent_p.sync_target_with_online()  
 
