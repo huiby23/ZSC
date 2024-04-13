@@ -351,6 +351,11 @@ if __name__ == "__main__":
                 loss.backward()
                 
                 batch_p, weight_p = replay_buffer_p.sample(args.batchsize, args.train_device)
+                if np.random.rand() < 0.01:
+                    obs = batch_p.obs
+                    for idx in range(args.play_styles):
+                        count_ps = torch.sum(obs["playStyle"]==idx)
+                        print(f"playstyle {idx} count: {count_ps}")
                 loss_p, priority_p, online_q_p, extra_loss, extra_info = agent_p.loss(batch_p, args.aux_weight, stat_p, diversity_args)
                 loss_p = (loss_p * weight).mean()
                 extra_loss = torch.mean(extra_loss * weight)
