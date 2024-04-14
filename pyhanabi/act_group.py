@@ -181,7 +181,8 @@ class ActGroup:
                                     agent_params["rand_perstep"],
                                 )
                                 game_actors.append(actor_p)    
-                                seed += 1
+                                #use the same seed
+                            seed += 1
                             for k in range(num_player):
                                 partners = game_actors[:]
                                 partners[k] = None
