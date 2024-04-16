@@ -450,7 +450,7 @@ if __name__ == "__main__":
                 pickle.dump(dict_stats, pickle_file)
             force_save_name = None
             if epoch > 0 and (epoch + 1) % 50 == 0:
-                force_save_name = "model_epoch%d" % epoch
+                force_save_name = "model_epoch%d" % (epoch + 1)
             model_saved = saver.save(
                 None, agent.online_net.state_dict(), score_mp, False, force_save_name, agent_p.online_net.state_dict()
             )
