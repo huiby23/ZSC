@@ -335,31 +335,20 @@ class R2D2Agent(torch.jit.ScriptModule):
         priority = self.aggregate_priority(priority, seq_len).detach().cpu()
         return {"priority": priority}
 
+    @torch.jit.script_method
     def get_entropy(
         self,
-        obs: Dict[str, torch.Tensor],
-        hid: Dict[str, torch.Tensor],
+        a_stack: torch.Tensor, # shape: [seq_len, batch, num_action, num_playstyle]
     ):
-        priv_s = obs["priv_s"]
-        assert (self.play_styles > 0)
-        expand_playstyles = self.playstyle_list.unsqueeze(1).unsqueeze(0).expand(priv_s.shape[0],self.play_styles,priv_s.shape[1],self.play_styles)
-        expand_hid = {}
-        expand_hid['h0'] = hid['h0'].unsqueeze(1).expand(hid['h0'].shape[0],self.play_styles,*hid['h0'].shape[1:]).flatten(1, 2)
-        expand_hid['c0'] = hid['c0'].unsqueeze(1).expand(hid['c0'].shape[0],self.play_styles,*hid['c0'].shape[1:]).flatten(1, 2)
-        legal_move = obs["legal_move"]
-        expand_priv_s = priv_s.unsqueeze(1).expand(priv_s.shape[0],self.play_styles,*priv_s.shape[1:])
+        a_stack_inuse = a_stack[0,:] # shape: [batch, num_action, num_playstyle]
+        a_stack_std = torch.std(a_stack_inuse,dim=1).mean().item()
         
-        expand_legal_move = legal_move.unsqueeze(1).expand(legal_move.shape[0],self.play_styles,*legal_move.shape[1:]).flatten(1, 2)
-        expand_obsinput = torch.cat((expand_priv_s,expand_playstyles),-1).flatten(1, 2)
-        total_distribution = self.online_net.calculate_distribution(expand_obsinput,expand_legal_move,expand_hid)
-        total_distribution = total_distribution.reshape(total_distribution.shape[0],self.play_styles,-1)
-        mean_distribution = torch.mean(total_distribution,dim=0) + 1e-6
+        norm_a_stack = a_stack_inuse - a_stack_inuse.mean(dim=1,keepdim=True)
+        softmax_a_stack = nn.functional.softmax(norm_a_stack,dim=1) # probability distribution, shape: [batch, num_action, num_playstyle]
+        mean_a_prob = softmax_a_stack.mean(dim=2) + 1e-6 # shape: [batch, num_action]
+        entropy = torch.sum(-mean_a_prob*torch.log(mean_a_prob),dim=-1)
 
-        entropy = torch.sum(-mean_distribution*torch.log(mean_distribution),dim=-1)
-
-        # this only works because the trajectories are padded,
-        # i.e. no terminal in the middle
-        return entropy.sum(dim=0), entropy.mean().item()
+        return entropy.mean(), a_stack_std        
 
     @torch.jit.script_method
     def get_real_mi(
@@ -390,41 +379,28 @@ class R2D2Agent(torch.jit.ScriptModule):
         # i.e. no terminal in the middle
         return torch.mean(minimize_target), extra_info
 
+    @torch.jit.script_method
     def get_sim_mi(
         self,
         obs: Dict[str, torch.Tensor],
-        action: torch.Tensor,
-        hid: Dict[str, torch.Tensor],
+        action: torch.Tensor, # shape: [seq_len, batch]
+        a_stack: torch.Tensor, # shape: [seq_len, batch, num_action, num_playstyle]
     ):
-        priv_s = obs["priv_s"]
-        assert (self.play_styles > 0)
-        onehot_playstyle = nn.functional.one_hot(obs["playStyle"],num_classes=self.play_styles).float()
-        onehot_playstyle_expand = onehot_playstyle.unsqueeze(1)
-        assert priv_s.dim() == 3
-        expand_hid = {}
-        expand_hid['h0'] = hid['h0'].unsqueeze(1).expand(hid['h0'].shape[0],self.play_styles+1,*hid['h0'].shape[1:]).flatten(1, 2)
-        expand_hid['c0'] = hid['c0'].unsqueeze(1).expand(hid['c0'].shape[0],self.play_styles+1,*hid['c0'].shape[1:]).flatten(1, 2)
-
-        expanded_playstyles = self.playstyle_list.unsqueeze(1).unsqueeze(0).expand(onehot_playstyle.shape[0],self.play_styles,*onehot_playstyle.shape[1:])
-        playstyle_encoding = torch.cat((onehot_playstyle_expand,self.generate_ps(expanded_playstyles)),dim=1).flatten(1, 2)
+        action_inuse = action[0,:] # shape: [batch]
+        a_stack_inuse = a_stack[0,:] # shape: [batch, num_action, num_playstyle]
+        playstyle_inuse = obs["playStyle"][0,:] # shape: [batch]
+        a_stack_std = torch.std(a_stack_inuse,dim=1).mean().item()
         
-        # priv_s = torch.cat((priv_s,obs["playStyle"]),dim=-1)
-        legal_move = obs["legal_move"]
-        
-        expand_priv_s = priv_s.unsqueeze(1).expand(priv_s.shape[0],self.play_styles+1,*priv_s.shape[1:]).flatten(1, 2)
-        expand_obsinput = torch.cat((expand_priv_s,playstyle_encoding),-1)
+        norm_a_stack = a_stack_inuse - a_stack_inuse.mean(dim=1,keepdim=True)
+        softmax_a_stack = nn.functional.softmax(norm_a_stack,dim=1) # probability distribution, shape: [batch, num_action, num_playstyle]
+        action_mask = nn.functional.one_hot(action_inuse,num_classes=self.num_action).float().unsqueeze(-1) # shape: [batch, num_action, 1]
+        chosen_a_prob = (softmax_a_stack*action_mask).sum(1) # action probability, shape: [batch, num_playstyle]
+        present_playstyle_mask = (playstyle_inuse.unsqueeze(1).expand(-1,self.play_styles) == self.playstyle_list.unsqueeze(0)).float() # shape: [batch, num_playstyle]
+        prob_mean = chosen_a_prob.mean(dim=1) + 1e-6 # shape: [batch]
+        present_playstyle_prob = (present_playstyle_mask * chosen_a_prob).sum(1) # shape: [batch]
+        mutual_info = torch.log(present_playstyle_prob/prob_mean)
 
-        expand_legal_move = legal_move.unsqueeze(1).expand(legal_move.shape[0],self.play_styles+1,*legal_move.shape[1:]).flatten(1, 2)
-        expand_action = action.unsqueeze(1).expand(action.shape[0],self.play_styles+1,*action.shape[1:]).flatten(1, 2)
-
-        total_p_vals = self.online_net.calculate_p(expand_obsinput,expand_legal_move,expand_action,expand_hid)
-        total_p_vals = total_p_vals.reshape(total_p_vals.shape[0],self.play_styles+1,-1)+1e-3
-        target_p_vals = total_p_vals[:,0,:]
-        res_p_vals = torch.mean(total_p_vals[:,1:,:],dim=1)
-        mutual_info = torch.log(target_p_vals/res_p_vals)
-        # this only works because the trajectories are padded,
-        # i.e. no terminal in the middle
-        return mutual_info.sum(dim=0), mutual_info.mean().item()
+        return mutual_info.mean(), a_stack_std
 
     @torch.jit.script_method
     def td_error(
@@ -563,12 +539,13 @@ class R2D2Agent(torch.jit.ScriptModule):
             else:
                 input_action = batch.action["a"]
             if div_args['div_type'] == 0: # sim mi
-                extra_loss, extra_info = self.get_sim_mi(batch.obs,input_action,hid)
+                extra_loss, extra_info = self.get_sim_mi(batch.obs,input_action,a_stack)
                 extra_loss = - extra_loss
             elif div_args['div_type'] == 1: # real mi
                 extra_loss, extra_info = self.get_real_mi(batch.obs,input_action,a_stack,div_args['max_val_mask'])
             elif div_args['div_type'] == 2: # entropy
-                extra_loss, extra_info = self.get_entropy(batch.obs,hid)
+                extra_loss, extra_info = self.get_entropy(a_stack)
+                extra_loss = - extra_loss
         elif div_args['calcu_type'] == 1:
             with torch.no_grad():
                 if div_args['act_type'] == 0: 
@@ -576,12 +553,13 @@ class R2D2Agent(torch.jit.ScriptModule):
                 else:
                     input_action = batch.action["a"]
                 if div_args['div_type'] == 0: # sim mi
-                    extra_loss, extra_info = self.get_sim_mi(batch.obs,input_action,hid)
+                    extra_loss, extra_info = self.get_sim_mi(batch.obs,input_action,a_stack)
                     extra_loss = - extra_loss
                 elif div_args['div_type'] == 1: # real mi
                     extra_loss, extra_info = self.get_real_mi(batch.obs,input_action,a_stack,div_args['max_val_mask'])
                 elif div_args['div_type'] == 2: # entropy
-                    extra_loss, extra_info = self.get_entropy(batch.obs,hid)        
+                    extra_loss, extra_info = self.get_entropy(a_stack)    
+                    extra_loss = - extra_loss    
         if aux_weight <= 0:
             return loss, priority, online_q, extra_loss, extra_info
 
