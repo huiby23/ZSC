@@ -16,33 +16,38 @@ import common_utils
 import rela
 import r2d2
 import utils
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "0" 
 ####################### parameters setting #######################
 
 
 # define protagonist set here
-
-protagonist_pathset = ['ps10_mir0_seed0','ps10_rp_mir0_seed0','ps10_rp_mir003_seed0','ps10_rp_mir01_seed0','ps10_rp_mirsub01_seed0','ps5_mir0_seed0','ps5_rp_mir0_seed0','ps5_rp_mir003_seed0','ps5_rp_mir01_seed0','ps5_rp_mirsub01_seed0']
+protagonist_raw = ['obl_seed1','obl_seed2','obl_seed3','obl_seed4','obl_seed5']
+protagonist_pathset = []
+for model_name in protagonist_raw:
+    protagonist_pathset.append('obl_models/'+model_name+'/model0.pthw')
 
 # define partner set here
 partner_pathset = []
 name_set = ['iql','vdn','sad','aux']
-
 for type_idx in range(4):
     for seed_idx in range(10):
-        partner_pathset.append(name_set[type_idx]+'/seed'+str(seed_idx))
+        partner_pathset.append('encoding_models/'+name_set[type_idx]+'/seed'+str(seed_idx)+'/model0.pthw')
 
 ####################### experiment codes #######################
 torch.backends.cudnn.benchmark = True
 
+final_results = []
 for prot_id, prot_path in enumerate(protagonist_pathset):
     score_set = []
     with open('verbose_out.txt', 'w') as f: # ignore verbose information
         original_stdout = sys.stdout
         sys.stdout = f
         for part_id, part_path in enumerate(partner_pathset):
-            test_models = ['models/'+prot_path+'/model0.pthw','models/'+part_path+'/model0.pthw']
-            score, _, _, _, _ = evaluate_saved_model(test_models, 500, 0, 0)
-            score_set.append(score)
+            if prot_path != part_path:
+                test_models = [prot_path, part_path]
+                score, _, _, _, _ = evaluate_saved_model(test_models, 500, 0, 0)
+                score_set.append(score)
         sys.stdout = original_stdout
     print('prot id: ', prot_id, 'test complete, score:', np.mean(score_set), '+-', np.std(score_set))
+    final_results.append(np.mean(score_set))
+print('final:',np.mean(final_results), '+-',np.std(final_results))

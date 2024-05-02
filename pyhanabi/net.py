@@ -407,44 +407,11 @@ class PublicLSTMNet(torch.jit.ScriptModule):
         return hid
 
     @torch.jit.script_method
-    def calculate_distribution(
-        self,
-        priv_s: torch.Tensor,
-        legal_move: torch.Tensor,
-    ) -> torch.Tensor:
-
-        o = self.net(priv_s)
-        a = self.fc_a(o)
-        normed_a = a - a.mean(dim=-1,keepdim=True)
-        q_prob = nn.functional.softmax(normed_a,dim=-1)
-        # q: [(seq_len), batch, num_action]
-        # action: [seq_len, batch]
-
-        return q_prob
-
-    @torch.jit.script_method
-    def calculate_p(
-        self,
-        priv_s: torch.Tensor,
-        legal_move: torch.Tensor,
-        action: torch.Tensor,
-    ) -> torch.Tensor:
-
-        o = self.net(priv_s)
-        a = self.fc_a(o)
-        normed_a = a - a.mean(dim=-1,keepdim=True)
-        q_prob = nn.functional.softmax(normed_a,dim=-1)
-        # q: [(seq_len), batch, num_action]
-        # action: [seq_len, batch]
-        pa = q_prob.gather(-1, action.unsqueeze(-1)).squeeze(-1)
-
-        return pa
-
-    @torch.jit.script_method
     def act(
         self,
         priv_s: torch.Tensor,
         publ_s: torch.Tensor,
+        playstyle_s: torch.Tensor,
         hid: Dict[str, torch.Tensor],
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         assert priv_s.dim() == 2
@@ -487,10 +454,11 @@ class PublicLSTMNet(torch.jit.ScriptModule):
         self,
         priv_s: torch.Tensor,
         publ_s: torch.Tensor,
+        playstyle_s: torch.Tensor,
         legal_move: torch.Tensor,
         action: torch.Tensor,
         hid: Dict[str, torch.Tensor],
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    ):
         assert (
             priv_s.dim() == 3 or priv_s.dim() == 2
         ), "dim = 3/2, [seq_len(optional), batch, dim]"
@@ -528,7 +496,7 @@ class PublicLSTMNet(torch.jit.ScriptModule):
             greedy_action = greedy_action.squeeze(0)
             o = o.squeeze(0)
             q = q.squeeze(0)
-        return qa, greedy_action, q, o
+        return qa, greedy_action, q, o, torch.zeros(0).to(o.device)
 
     def pred_loss_1st(self, lstm_o, target, hand_slot_mask, seq_len):
         return cross_entropy(self.pred_1st, lstm_o, target, hand_slot_mask, seq_len)
