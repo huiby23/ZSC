@@ -110,6 +110,10 @@ class ActGroup:
                                 game_actors[k].set_partners(partners)
                             thread_actors.append(game_actors)
                     if play_params['mp'] > 0:
+                        if play_params['pp'] > 0:
+                            input_p_buffer = None 
+                        else:
+                            input_p_buffer = replay_buffer_p
                         for u in range(play_params['mp']):
                             game_actors = []
                             actor_m = hanalearn.R2D2Actor(
@@ -143,7 +147,7 @@ class ActGroup:
                                 shuffle_color,
                                 hide_action,
                                 trinary,
-                                replay_buffer_p,
+                                input_p_buffer,
                                 multi_step,
                                 max_len,
                                 gamma,
