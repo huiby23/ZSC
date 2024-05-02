@@ -151,7 +151,7 @@ class R2D2Agent(torch.jit.ScriptModule):
         playstyle_s: torch.Tensor,
         legal_move: torch.Tensor,
         hid: Dict[str, torch.Tensor],
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], torch.Tensor]:
+    ):
         adv, new_hid = self.online_net.act(priv_s, publ_s, playstyle_s, hid)
         legal_adv = (1 + adv - adv.min()) * legal_move
         greedy_action = legal_adv.argmax(1).detach()
