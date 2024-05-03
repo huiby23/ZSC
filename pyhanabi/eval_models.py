@@ -49,7 +49,7 @@ if show_1zsc:
             for part_id, part_path in enumerate(partner_pathset):
                 if prot_path != part_path:
                     test_models = [prot_path, part_path]
-                    score, _, _, _, _ = evaluate_saved_model(test_models, 500, 0, 0)
+                    score, _, _, _, _ = evaluate_saved_model(test_models, 100, 0, 0)
                     score_set.append(score)
             sys.stdout = original_stdout
         print("Single Score: {:.2f}\pm{:.2f}".format(np.mean(score_set),np.std(score_set)))
