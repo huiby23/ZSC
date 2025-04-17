@@ -175,11 +175,12 @@ class LSTMNet(torch.jit.ScriptModule):
             self.in_dim = in_dim
             self.priv_in_dim = in_dim[1]
             self.publ_in_dim = in_dim[2]
+        
         self.play_styles = play_styles
         self.hid_dim = hid_dim
         self.out_dim = out_dim
         self.num_ff_layer = 1
-        self.num_lstm_layer = num_lstm_layer
+        self.num_lstm_layer = num_lstm_layer#2
         ff_layers = [nn.Linear(self.priv_in_dim, self.hid_dim), nn.ReLU()]
         for i in range(1, self.num_ff_layer):
             ff_layers.append(nn.Linear(self.hid_dim, self.hid_dim))
