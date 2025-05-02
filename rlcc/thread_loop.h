@@ -13,7 +13,7 @@ class HanabiThreadLoop : public rela::ThreadLoop {
  public:
   HanabiThreadLoop(
       std::vector<std::shared_ptr<HanabiEnv>> envs,
-      std::vector<std::vector<std::shared_ptr<R2D2Actor>>> actors,
+      std::vector<std::vector<std::shared_ptr<R2D2Actor>>> actors,//num_game_per_thread
       bool eval)
       : envs_(std::move(envs))
       , actors_(std::move(actors))
@@ -59,7 +59,7 @@ class HanabiThreadLoop : public rela::ThreadLoop {
           }
 
           auto& actors = actors_[i];
-
+          // if the env is terminated, we need to reset it
           if (envs_[i]->terminated()) {
             // we only run 1 game for evaluation
             if (eval_) {
@@ -83,12 +83,12 @@ class HanabiThreadLoop : public rela::ThreadLoop {
               actors[j]->reset(*envs_[i]);
             }
           }
-
+          // observe the envs before acting
           for (size_t j = 0; j < actors.size(); ++j) {
             actors[j]->observeBeforeAct(*envs_[i]);
           }
         }
-
+        // actors act and record their actions
         for (size_t i = 0; i < envs_.size(); ++i) {
           if (done_[i] == 1) {
             continue;

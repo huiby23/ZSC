@@ -68,7 +68,15 @@ class ActGroup:
             self.off_belief = off_belief
             self.belief_model = belief_model
             self.belief_runner = None
+            
+            '''
+            total:num_tread*num_game_per_thread*num_player
 
+            ActGroup.actors:[num_thread*thread_actors]
+            thread_actors:[num_game_per_thread*game_actors] while num_game_per_thread==mm+mp+pp
+            game_actors:[num_player*hanalearn.R2D2actor]
+            
+            '''
             self.actors = []
             assert (method == "iql")
             total_groups = play_params['mm']+play_params['mp']+play_params['pp']
@@ -135,27 +143,30 @@ class ActGroup:
                                 0,
                                 False,
                             )
-                            actor_p = hanalearn.R2D2Actor(
-                                self.model_runners_p[i % self.num_runners],
-                                seed,
-                                num_player,
-                                1,
-                                explore_eps,
-                                boltzmann_t,
-                                False,
-                                sad,
-                                shuffle_color,
-                                hide_action,
-                                trinary,
-                                input_p_buffer,
-                                multi_step,
-                                max_len,
-                                gamma,
-                                agent_params["play_styles"],
-                                agent_params["rand_perstep"],
-                            )                        
+                            game_actors.append(actor_m)
+                            for idx in range(num_player-1):
+                                actor_p = hanalearn.R2D2Actor(
+                                    self.model_runners_p[i % self.num_runners],
+                                    seed,
+                                    num_player,
+                                    idx+1,
+                                    explore_eps,
+                                    boltzmann_t,
+                                    False,
+                                    sad,
+                                    shuffle_color,
+                                    hide_action,
+                                    trinary,
+                                    input_p_buffer,
+                                    multi_step,
+                                    max_len,
+                                    gamma,
+                                    agent_params["play_styles"],
+                                    agent_params["rand_perstep"],
+                                ) 
+                                game_actors.append(actor_p)                       
                             seed += 1
-                            game_actors = [actor_m,actor_p]
+                            # game_actors = [actor_m,actor_p]
                             for k in range(num_player):
                                 partners = game_actors[:]
                                 partners[k] = None

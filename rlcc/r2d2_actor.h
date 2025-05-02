@@ -121,6 +121,7 @@ class R2D2Actor {
 
   void setPartners(std::vector<std::shared_ptr<R2D2Actor>> partners) {
     partners_ = std::move(partners);
+    // std::cout << "partners_.size() = " << partners_.size() << ", numPlayer_ = " << numPlayer_ << std::endl;
     assert((int)partners_.size() == numPlayer_);
     assert(partners_[playerIdx_] == nullptr);
   }

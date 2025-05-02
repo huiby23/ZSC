@@ -30,8 +30,8 @@ import utils
 
 def parse_args():
     parser = argparse.ArgumentParser(description="train dqn on hanabi")
-    parser.add_argument("--save_dir", type=str, default="exps/exp1")
-    parser.add_argument("--method", type=str, default="vdn")
+    parser.add_argument("--save_dir", type=str, default="subnet_models/5p_s4_ps5_div1_mm1_mp2_w1")
+    parser.add_argument("--method", type=str, default="iql")
     parser.add_argument("--shuffle_color", type=int, default=0)
     parser.add_argument("--aux_weight", type=float, default=0)
     parser.add_argument("--boltzmann_act", type=int, default=0)
@@ -49,7 +49,7 @@ def parse_args():
     parser.add_argument("--clone_weight", type=float, default=0.0)
     parser.add_argument("--clone_t", type=float, default=0.02)
 
-    parser.add_argument("--seed", type=int, default=10001)
+    parser.add_argument("--seed", type=int, default=4)
     parser.add_argument("--gamma", type=float, default=0.999, help="discount factor")
     parser.add_argument(
         "--eta", type=float, default=0.9, help="eta for aggregate priority"
@@ -57,7 +57,7 @@ def parse_args():
     parser.add_argument("--train_bomb", type=int, default=0)
     parser.add_argument("--eval_bomb", type=int, default=0)
     parser.add_argument("--sad", type=int, default=0)
-    parser.add_argument("--num_player", type=int, default=2)
+    parser.add_argument("--num_player", type=int, default=3)
 
     # optimization/training settings
     parser.add_argument("--lr", type=float, default=6.25e-5, help="Learning rate")
@@ -65,22 +65,24 @@ def parse_args():
     parser.add_argument("--grad_clip", type=float, default=5, help="max grad norm")
     parser.add_argument("--num_lstm_layer", type=int, default=2)
     parser.add_argument("--rnn_hid_dim", type=int, default=512)
+    # parser.add_argument(
+    #     "--net", type=str, default="publ-lstm", help="publ-lstm/ffwd/lstm"
+    # )
     parser.add_argument(
-        "--net", type=str, default="publ-lstm", help="publ-lstm/ffwd/lstm"
+        "--net", type=str, default="lstm", help=""
     )
-
     parser.add_argument("--train_device", type=str, default="cuda:0")
     parser.add_argument("--batchsize", type=int, default=128)
-    parser.add_argument("--num_epoch", type=int, default=5000)
-    parser.add_argument("--epoch_len", type=int, default=1000)
+    parser.add_argument("--num_epoch", type=int, default=500)
+    parser.add_argument("--epoch_len", type=int, default=600)
     parser.add_argument("--num_update_between_sync", type=int, default=2500)
 
     # DQN settings
     parser.add_argument("--multi_step", type=int, default=3)
 
     # replay buffer settings
-    parser.add_argument("--burn_in_frames", type=int, default=10000)
-    parser.add_argument("--replay_buffer_size", type=int, default=100000)
+    parser.add_argument("--burn_in_frames", type=int, default=1000)
+    parser.add_argument("--replay_buffer_size", type=int, default=35000)
     parser.add_argument(
         "--priority_exponent", type=float, default=0.9, help="alpha in p-replay"
     )
@@ -91,8 +93,8 @@ def parse_args():
     parser.add_argument("--prefetch", type=int, default=3, help="#prefetch batch")
 
     # thread setting
-    parser.add_argument("--num_thread", type=int, default=10, help="#thread_loop")
-    parser.add_argument("--num_game_per_thread", type=int, default=40)
+    parser.add_argument("--num_thread", type=int, default=36, help="#thread_loop")
+    parser.add_argument("--num_game_per_thread", type=int, default=33)
 
     # actor setting
     parser.add_argument("--act_base_eps", type=float, default=0.1)
@@ -105,20 +107,20 @@ def parse_args():
     parser.add_argument("--adv_ratio", type=float, default=0.0)   
 
     # non-parameter sharing setting
-    parser.add_argument("--no_sharing", type=bool, default=False)     
+    parser.add_argument("--no_sharing", type=bool, default=1)     
 
     # playstyles setting
-    parser.add_argument("--play_styles", type=int, default=0)
+    parser.add_argument("--play_styles", type=int, default=5)
     parser.add_argument("--rand_perstep", type=bool, default=False)  
 
     # PBL-encoding training setting
     parser.add_argument("--group_mm", type=int, default=1)
-    parser.add_argument("--group_mp", type=int, default=1)
+    parser.add_argument("--group_mp", type=int, default=2)
     parser.add_argument("--group_pp", type=int, default=0)
 
-    parser.add_argument("--div_type", type=int, default=0) # 0:sim_mim; 1:real_mim; 2:entropy   
+    parser.add_argument("--div_type", type=int, default=1) # 0:sim_mim; 1:real_mim; 2:entropy   
     parser.add_argument("--action_inputtype", type=int, default=0) # 0:greedy action; 1:in batch action
-    parser.add_argument("--div_weight", type=float, default=0) 
+    parser.add_argument("--div_weight", type=float, default=1) 
     parser.add_argument("--calcu_loss", type=bool, default=False) 
     parser.add_argument("--max_val_mask", type=bool, default=False) 
 
@@ -185,6 +187,7 @@ if __name__ == "__main__":
         calcu_type = 1
     else:
         calcu_type = 0
+    
     diversity_args = {
         'calcu_type': calcu_type,
         'act_type': args.action_inputtype,
@@ -199,9 +202,9 @@ if __name__ == "__main__":
             args.gamma,
             args.eta,
             args.train_device,
-            games[0].feature_size(args.sad),
-            args.rnn_hid_dim,
-            games[0].num_action(),
+            games[0].feature_size(args.sad),#in_dim，(size, priv, publ)
+            args.rnn_hid_dim,#hid_dim
+            games[0].num_action(),#out_dim
             args.net,
             args.num_lstm_layer,
             args.boltzmann_act,
@@ -293,7 +296,7 @@ if __name__ == "__main__":
             agent_params,
             play_params=group_params,
         )
-
+        
         context, threads = create_threads(
             args.num_thread,
             args.num_game_per_thread,
