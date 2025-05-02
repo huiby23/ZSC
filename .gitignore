@@ -18,6 +18,7 @@ pyhanabi/models/*
 pyhanabi/iclr_models/*
 pyhanabi/notebooks/*
 pyhanabi/extract_human_data.py
+pyhanabi/subnet_models/*
 copyright.py
 filter_models.py
 models/icml_obl_models.zip
@@ -28,3 +29,4 @@ models_bkup/
 *.pdf
 *.npy
 *.sh
+core
