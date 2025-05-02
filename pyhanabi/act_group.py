@@ -53,18 +53,22 @@ class ActGroup:
         if agent_p is not None:
             self.model_runners = []
             self.model_runners_p = []
-
+            _runner_ps = []
             for dev in self.devices:
                 runner = rela.BatchRunner(agent.clone(dev), dev)
-                runner_p = rela.BatchRunner(agent_p.clone(dev), dev)
                 runner.add_method("act", 5000)
                 runner.add_method("compute_priority", 100)
-                runner_p.add_method("act", 5000)
-                runner_p.add_method("compute_priority", 100)
                 self.model_runners.append(runner)
-                self.model_runners_p.append(runner_p)
-            self.num_runners = len(self.model_runners)
 
+                for agent_p_ in agent_p:
+                    runner_p = rela.BatchRunner(agent_p_.clone(dev), dev)
+                    runner_p.add_method("act", 5000)
+                    runner_p.add_method("compute_priority", 100)
+                    _runner_ps.append(runner_p)
+                self.model_runners_p.append(_runner_ps)
+                
+            self.num_runners = len(self.model_runners)
+            self.num_runners_p = len(self.model_runners_p)
             self.off_belief = off_belief
             self.belief_model = belief_model
             self.belief_runner = None
@@ -146,7 +150,7 @@ class ActGroup:
                             game_actors.append(actor_m)
                             for idx in range(num_player-1):
                                 actor_p = hanalearn.R2D2Actor(
-                                    self.model_runners_p[i % self.num_runners],
+                                    self.model_runners_p[i % self.num_runners_p][idx],
                                     seed,
                                     num_player,
                                     idx+1,
@@ -157,7 +161,7 @@ class ActGroup:
                                     shuffle_color,
                                     hide_action,
                                     trinary,
-                                    input_p_buffer,
+                                    input_p_buffer[idx],
                                     multi_step,
                                     max_len,
                                     gamma,
@@ -175,9 +179,9 @@ class ActGroup:
                     if play_params['pp'] > 0:
                         for u in range(play_params['pp']):
                             game_actors = []
-                            for idx in range(num_player):
+                            for idx in range(num_player-1):
                                 actor_p = hanalearn.R2D2Actor(
-                                    self.model_runners_p[i % self.num_runners],
+                                    self.model_runners_p[i % self.num_runners][idx],
                                     seed,
                                     num_player,
                                     idx,
@@ -308,8 +312,9 @@ class ActGroup:
     def start_nonsharing(self):
         for runner in self.model_runners:
             runner.start()
-        for runner in self.model_runners_p:
-            runner.start()
+        for runners in self.model_runners_p:
+            for runner in runners:
+                runner.start()
 
     def update_model(self, agent):
         for runner in self.model_runners:

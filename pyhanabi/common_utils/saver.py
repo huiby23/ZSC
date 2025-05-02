@@ -25,7 +25,7 @@ class TopkSaver:
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
-    def save(self, model, state_dict, perf, save_latest=False, force_save_name=None, state_dict_p=None):
+    def save(self, model, state_dict, perf, save_latest=False, force_save_name=None, state_dict_ps=None):
         if force_save_name is not None:
             model_name = "%s.pthm" % force_save_name
             weight_name = "%s.pthw" % force_save_name
@@ -33,8 +33,11 @@ class TopkSaver:
                 model.save(os.path.join(self.save_dir, model_name))
             if state_dict is not None:
                 torch.save(state_dict, os.path.join(self.save_dir, weight_name))
-            if state_dict_p is not None:
-                torch.save(state_dict_p, os.path.join(self.save_dir, ("p_"+weight_name)))
+            if state_dict_ps is not None:
+                for state_dict_p in state_dict_ps:
+                    weight_name = "%s_%i.pthw" % (force_save_name, state_dict_ps.index(state_dict_p))
+                    torch.save(state_dict_p, os.path.join(self.save_dir, ("p_"+weight_name)))
+                # torch.save(state_dict_p, os.path.join(self.save_dir, ("p_"+weight_name)))
 
         if save_latest:
             model_name = "latest.pthm"
@@ -55,8 +58,11 @@ class TopkSaver:
             model.save(os.path.join(self.save_dir, model_name))
         if state_dict is not None:
             torch.save(state_dict, os.path.join(self.save_dir, weight_name))
-        if state_dict_p is not None:
-            torch.save(state_dict_p, os.path.join(self.save_dir, ("p_"+weight_name)))
+        if state_dict_ps is not None:
+            for state_dict_p in state_dict_ps:
+                weight_name = "model%i_%i.pthw" % (self.worse_perf_idx, state_dict_ps.index(state_dict_p))
+                torch.save(state_dict_p, os.path.join(self.save_dir, ("p_"+weight_name)))
+            # torch.save(state_dict_ps, os.path.join(self.save_dir, ("p_"+weight_name)))
 
         if len(self.perfs) < self.topk:
             self.perfs.append(perf)

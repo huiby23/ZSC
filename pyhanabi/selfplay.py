@@ -214,26 +214,29 @@ if __name__ == "__main__":
             adv_ratio=args.adv_ratio,
         )
         agent.sync_target_with_online()      
-
-        agent_p = r2d2.R2D2Agent(
-            (args.method == "vdn"),
-            args.multi_step,
-            args.gamma,
-            args.eta,
-            args.train_device,
-            games[0].feature_size(args.sad),
-            args.rnn_hid_dim,
-            games[0].num_action(),
-            args.net,
-            args.num_lstm_layer,
-            args.boltzmann_act,
-            False,  # uniform priority
-            args.off_belief,
-            adv_type=args.adv_type,
-            adv_ratio=args.adv_ratio,
-            play_styles=args.play_styles,
-        )
-        agent_p.sync_target_with_online()  
+        
+        agent_ps = []
+        for i in range(args.num_player - 1):
+            agent_p = r2d2.R2D2Agent(
+                (args.method == "vdn"),
+                args.multi_step,
+                args.gamma,
+                args.eta,
+                args.train_device,
+                games[0].feature_size(args.sad),
+                args.rnn_hid_dim,
+                games[0].num_action(),
+                args.net,
+                args.num_lstm_layer,
+                args.boltzmann_act,
+                False,  # uniform priority
+                args.off_belief,
+                adv_type=args.adv_type,
+                adv_ratio=args.adv_ratio,
+                play_styles=args.play_styles,
+            )
+            agent_p.sync_target_with_online()  
+            agent_ps.append(agent_p)
 
 
         if args.load_model and args.load_model != "None":
@@ -245,12 +248,14 @@ if __name__ == "__main__":
         # partner model is saved along with the main model by default
 
         agent = agent.to(args.train_device)
-        agent_p = agent_p.to(args.train_device)
+        # agent_p = agent_p.to(args.train_device)
+        agent_ps = [agent_p.to(args.train_device) for agent_p in agent_ps]
         optim = torch.optim.Adam(agent.online_net.parameters(), lr=args.lr, eps=args.eps)
-        optim_p = torch.optim.Adam(agent_p.online_net.parameters(), lr=args.lr, eps=args.eps)
+        optim_ps = [torch.optim.Adam(agent_p.online_net.parameters(), lr=args.lr, eps=args.eps) for agent_p in agent_ps]
+        # optim_p = torch.optim.Adam(agent_p.online_net.parameters(), lr=args.lr, eps=args.eps)
         print(agent)
         eval_agent = agent.clone(args.train_device, {"vdn": False, "boltzmann_act": False, "adv_type": 0, "adv_ratio":0})
-        eval_agent_p = agent_p.clone(args.train_device, {"vdn": False, "boltzmann_act": False, "adv_type": 0, "adv_ratio":0})
+        eval_agent_ps = [agent_p.clone(args.train_device, {"vdn": False, "boltzmann_act": False, "adv_type": 0, "adv_ratio":0}) for agent_p in agent_ps]
 
         replay_buffer = rela.RNNPrioritizedReplay(
             args.replay_buffer_size,
@@ -259,13 +264,24 @@ if __name__ == "__main__":
             args.priority_weight,
             args.prefetch,
         )
-        replay_buffer_p = rela.RNNPrioritizedReplay(
-            args.replay_buffer_size,
-            args.seed,
-            args.priority_exponent,
-            args.priority_weight,
-            args.prefetch,
-        )
+        replay_buffer_ps = []
+        for i in range(args.num_player - 1):
+            replay_buffer_p = rela.RNNPrioritizedReplay(
+                args.replay_buffer_size,
+                args.seed,
+                args.priority_exponent,
+                args.priority_weight,
+                args.prefetch,
+            )
+            replay_buffer_ps.append(replay_buffer_p)
+        
+        # replay_buffer_p = rela.RNNPrioritizedReplay(
+        #     args.replay_buffer_size,
+        #     args.seed,
+        #     args.priority_exponent,
+        #     args.priority_weight,
+        #     args.prefetch,
+        # )
         belief_model = None
         
         print('Agent initialization complete. Disable parameter sharing.')
@@ -291,8 +307,8 @@ if __name__ == "__main__":
             args.gamma,
             args.off_belief,
             belief_model,
-            agent_p,
-            replay_buffer_p,
+            agent_ps,
+            replay_buffer_ps,
             agent_params,
             play_params=group_params,
         )
@@ -318,29 +334,35 @@ if __name__ == "__main__":
         frame_stat["num_buffer"] = 0
 
         stat = common_utils.MultiCounter(args.save_dir)
-        stat_p = common_utils.MultiCounter(args.save_dir)
+        stat_ps = [common_utils.MultiCounter(args.save_dir) for _ in range(args.num_player - 1)]
         tachometer = utils.Tachometer()
         stopwatch = common_utils.Stopwatch()
 
         for epoch in range(args.num_epoch):
+            
             print("beginning of epoch: ", epoch)
             print(common_utils.get_mem_usage())
             tachometer.start()
             stat.reset()
-            stat_p.reset()
+            for stat_p in stat_ps:
+                stat_p.reset()
             stopwatch.reset()
+            
             main_loss_list = []
             raw_loss_list = []
             extra_loss_list = []
             extra_info_list = []
+            
             start_time = time.time()
+            
             for batch_idx in range(args.epoch_len):
                 num_update = batch_idx + epoch * args.epoch_len
                 if num_update % args.num_update_between_sync == 0:
                     agent.sync_target_with_online()
-                    agent_p.sync_target_with_online()
+                    for agent_p in agent_ps:
+                        agent_p.sync_target_with_online()
                 if num_update % args.actor_sync_freq == 0:
-                    act_group.update_model_nonsharing(agent,agent_p)
+                    act_group.update_model_nonsharing(agent,agent_ps)
 
                 torch.cuda.synchronize()
                 stopwatch.time("sync and updating")
@@ -353,48 +375,67 @@ if __name__ == "__main__":
                 main_loss_list.append(loss.item())
                 loss.backward()
                 
-                batch_p, weight_p = replay_buffer_p.sample(args.batchsize, args.train_device)
-                # if np.random.rand() < 0.05:
-                #     obs = batch_p.obs
-                #     print('ps:',obs["playStyle"].shape)
-                #     print('obs:',batch_p.reward.shape)
-                #     for idx in range(args.play_styles):
-                #         count_ps = torch.sum(obs["playStyle"]==idx)
-                #         print(f"playstyle {idx} count: {count_ps}")
-                loss_p, priority_p, online_q_p, extra_loss, extra_info = agent_p.loss(batch_p, args.aux_weight, stat_p, diversity_args)
-                loss_p = (loss_p * weight_p).mean()
-                raw_loss_list.append(loss_p.item())
-                extra_loss_list.append(extra_loss.item())
-                extra_info_list.append(extra_info)
-                final_p_loss = loss_p + args.div_weight*extra_loss
-                final_p_loss.backward()
+                sum_loss_p = 0
+                sum_g_norm_p = 0
+                sum_boltzmann_t_p = 0
+                for agent_p, replay_buffer_p, optim_p, stat_p in zip(agent_ps, replay_buffer_ps, optim_ps, stat_ps):
+                    batch_p, weight_p = replay_buffer_p.sample(args.batchsize, args.train_device)
+                    # if np.random.rand() < 0.05:
+                    #     obs = batch_p.obs
+                    #     print('ps:',obs["playStyle"].shape)
+                    #     print('obs:',batch_p.reward.shape)
+                    #     for idx in range(args.play_styles):
+                    #         count_ps = torch.sum(obs["playStyle"]==idx)
+                    #         print(f"playstyle {idx} count: {count_ps}")
+                    loss_p, priority_p, online_q_p, extra_loss, extra_info = agent_p.loss(batch_p, args.aux_weight, stat_p, diversity_args)
+                    loss_p = (loss_p * weight_p).mean()
+
+                    final_p_loss = loss_p + args.div_weight*extra_loss
+                    final_p_loss.backward()
+
+                    g_norm_p = torch.nn.utils.clip_grad_norm_(agent_p.online_net.parameters(), args.grad_clip)
+                    optim_p.step()
+                    optim_p.zero_grad()
+
+                    raw_loss_list.append(loss_p.item())
+                    extra_loss_list.append(extra_loss.item())
+                    extra_info_list.append(extra_info)
+                    
+                    replay_buffer_p.update_priority(priority_p)
+
+                    sum_loss_p += loss_p.detach().item()
+                    sum_g_norm_p += g_norm_p
+                    sum_boltzmann_t_p += batch_p.obs["temperature"][0].mean()
+                    
+                # stat["loss_p"].feed(loss_p.detach().item())
+                # stat["grad_norm_p"].feed(g_norm_p)
+                # stat["boltzmann_t_p"].feed(batch_p.obs["temperature"][0].mean())
+                stat["loss_p"].feed(sum_loss_p/(args.num_player-1))
+                stat["grad_norm_p"].feed(g_norm_p/(args.num_player-1))
+                stat["boltzmann_t_p"].feed(sum_boltzmann_t_p/(args.num_player-1))
+                    
                 torch.cuda.synchronize()
                 stopwatch.time("forward & backward")
 
-                g_norm = torch.nn.utils.clip_grad_norm_(
-                    agent.online_net.parameters(), args.grad_clip
-                )
+                g_norm = torch.nn.utils.clip_grad_norm_(agent.online_net.parameters(), args.grad_clip)
                 optim.step()
                 optim.zero_grad()
-                g_norm_p = torch.nn.utils.clip_grad_norm_(
-                    agent_p.online_net.parameters(), args.grad_clip
-                )
-                optim_p.step()
-                optim_p.zero_grad()
+                # g_norm_p = torch.nn.utils.clip_grad_norm_(
+                #     agent_p.online_net.parameters(), args.grad_clip
+                # )
+                # optim_p.step()
+                # optim_p.zero_grad()
 
                 torch.cuda.synchronize()
                 stopwatch.time("update model")
 
                 replay_buffer.update_priority(priority)
-                replay_buffer_p.update_priority(priority_p)
                 stopwatch.time("updating priority")
 
                 stat["loss"].feed(loss.detach().item())
                 stat["grad_norm"].feed(g_norm)
                 stat["boltzmann_t"].feed(batch.obs["temperature"][0].mean())
-                stat["loss_p"].feed(loss_p.detach().item())
-                stat["grad_norm_p"].feed(g_norm_p)
-                stat["boltzmann_t_p"].feed(batch_p.obs["temperature"][0].mean())
+                
             
             
 
@@ -406,7 +447,9 @@ if __name__ == "__main__":
 
             eval_seed = (9917 + epoch * 999999) % 7777777
             eval_agent.load_state_dict(agent.state_dict())
-            eval_agent_p.load_state_dict(agent_p.state_dict())
+            # eval_agent_p.load_state_dict(agent_p.state_dict())
+            for eval_agent_p in eval_agent_ps:
+                eval_agent_p.load_state_dict(agent_ps.state_dict())
 
             score_mm, perfect_mm, *_ = evaluate(
                 [eval_agent, eval_agent],
@@ -418,30 +461,42 @@ if __name__ == "__main__":
                 args.hide_action,
                 device = args.act_device,
             )
+            score_mp, perfect_mp,score_pp, perfect_pp = 0, 0, 0, 0
+            for eval_agent_p in eval_agent_ps:
+                score_mp_, perfect_mp_, *_ = evaluate(
+                    [eval_agent, eval_agent_p],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                    params = [None,agent_params],
+                    device = args.act_device,
+                )
+                score_mp += score_mp_
+                perfect_mp += perfect_mp_
 
-            score_mp, perfect_mp, *_ = evaluate(
-                [eval_agent, eval_agent_p],
-                1000,
-                eval_seed,
-                args.eval_bomb,
-                0,  # explore eps
-                args.sad,
-                args.hide_action,
-                params = [None,agent_params],
-                device = args.act_device,
-            )
+                score_pp_, perfect_pp_, *_ = evaluate(
+                    [eval_agent_p, eval_agent_p],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                    params = [agent_params,agent_params],
+                    device = args.act_device,
+                )
 
-            score_pp, perfect_pp, *_ = evaluate(
-                [eval_agent_p, eval_agent_p],
-                1000,
-                eval_seed,
-                args.eval_bomb,
-                0,  # explore eps
-                args.sad,
-                args.hide_action,
-                params = [agent_params,agent_params],
-                device = args.act_device,
-            )
+                score_pp += score_pp_
+                perfect_pp += perfect_pp_
+            
+            score_mp /= len(eval_agent_ps)
+            perfect_mp /= len(eval_agent_ps)
+            score_pp /= len(eval_agent_ps)
+            perfect_pp /= len(eval_agent_ps)
+
             dict_stats['main_rl_loss'][epoch] = np.mean(main_loss_list)
             dict_stats['partner_rl_loss'][epoch] = np.mean(raw_loss_list)
             dict_stats['partner_extra_loss'][epoch] = np.mean(extra_loss_list)
