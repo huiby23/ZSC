@@ -135,27 +135,29 @@ class ActGroup:
                                 0,
                                 False,
                             )
-                            actor_p = hanalearn.R2D2Actor(
-                                self.model_runners_p[i % self.num_runners],
-                                seed,
-                                num_player,
-                                1,
-                                explore_eps,
-                                boltzmann_t,
-                                False,
-                                sad,
-                                shuffle_color,
-                                hide_action,
-                                trinary,
-                                input_p_buffer,
-                                multi_step,
-                                max_len,
-                                gamma,
-                                agent_params["play_styles"],
-                                agent_params["rand_perstep"],
-                            )                        
-                            seed += 1
-                            game_actors = [actor_m,actor_p]
+                            game_actors.append(actor_m)
+                            for idx in range(num_player-1):
+                                actor_p = hanalearn.R2D2Actor(
+                                    self.model_runners_p[i % self.num_runners],
+                                    seed,
+                                    num_player,
+                                    idx+1,
+                                    explore_eps,
+                                    boltzmann_t,
+                                    False,
+                                    sad,
+                                    shuffle_color,
+                                    hide_action,
+                                    trinary,
+                                    input_p_buffer,
+                                    multi_step,
+                                    max_len,
+                                    gamma,
+                                    agent_params["play_styles"],
+                                    agent_params["rand_perstep"],
+                                )                        
+                                seed += 1
+                                game_actors.append(actor_p)
                             for k in range(num_player):
                                 partners = game_actors[:]
                                 partners[k] = None

@@ -1,0 +1,94 @@
+
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Python with C++ Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/root/miniconda3/envs/hanabi/bin/python",
+            "args": [
+                "${workspaceFolder}/pyhanabi/selfplay.py"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/root/miniconda3/envs/hanabi/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                  "description": "Set Python extension debug flag",
+                  "text": "-gdb-set python print-stack true",
+                  "ignoreFailures": true
+                }
+            ],
+            "logging": { "moduleLoad": true }
+        },
+        {
+            "name": "Attach to Python Process",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "/root/miniconda3/envs/hanabi/bin/python",
+            "processId": "${command:pickProcess}",
+            "MIMode": "gdb",
+            "miDebuggerPath": "/root/miniconda3/envs/hanabi/bin/gdb"
+        }
+    ]
+  }
+  
+  
+  
+  // {
+  //   "version": "0.2.0",
+  //   "configurations": [
+  //       {
+  //           // 1. Python + C++ 混合调试入口
+  //           "name": "Python C++ Debugger",
+  //           "type": "pythoncpp",
+  //           "request": "launch",
+  //           "pythonLaunchName": "Python: 当前文件",       // 和下面 python 配置名字对应
+  //           "cppAttachName": "(gdb) Attach"                // 和下面 C++ 配置名字对应
+  //           // "pythonConfig": "default",
+  //           // "cppConfig": "default (gdb) Attach",
+  //       },
+  //       {
+  //           // 2. C++ (gdb) Attach 调试
+  //           "name": "(gdb) Attach",
+  //           "type": "cppdbg",
+  //           "request": "attach",
+  //           "program": "",                             // 附加时留空没关系
+  //           "processId": "${command:pickProcess}",     // 选择进程
+  //           "MIMode": "gdb",                           // 使用gdb
+  //           "miDebuggerPath": "/root/miniconda3/envs/hanabi/bin/gdb",           // 你的gdb路径！确认一下
+  //           "setupCommands": [
+  //               {
+  //                   "description": "Enable pretty-printing for gdb",
+  //                   "text": "-enable-pretty-printing",
+  //                   "ignoreFailures": true
+  //               }
+  //           ]
+  //       },
+  //       {
+  //           // 3. 纯Python调试 - 当前文件
+  //           "name": "Python: 当前文件",
+  //           "type": "debugpy",
+  //           "request": "launch",
+  //           "program": "${file}",
+  //           "console": "integratedTerminal",
+  //           "subProcess": true                          // 重要：子进程跟踪！（用于 pybind11 动态调用 C++）
+  //       },
+  //       {
+  //           // 4. 纯Python调试 - 附加到已运行进程
+  //           "name": "Python: 附加到进程",
+  //           "type": "debugpy",
+  //           "request": "attach",
+  //           "processId": "${command:pickProcess}"
+  //       }
+  //   ]
+  // }
