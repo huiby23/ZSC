@@ -228,6 +228,7 @@ class LSTMNet(torch.jit.ScriptModule):
             "c0": hid["c0"].transpose(0, 1).flatten(1, 2).contiguous(),
         }
         priv_s = priv_s.unsqueeze(0)
+        # print('pass{}'.format(priv_s.shape))
         x = self.net(priv_s)
         o, (h, c) = self.lstm(x, (hid["h0"], hid["c0"])) # o shape: [1, batch, dim]
         if self.play_styles == 0:

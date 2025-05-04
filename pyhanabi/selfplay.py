@@ -92,8 +92,8 @@ def parse_args():
     parser.add_argument("--prefetch", type=int, default=3, help="#prefetch batch")
 
     # thread setting
-    parser.add_argument("--num_thread", type=int, default=36, help="#thread_loop")
-    parser.add_argument("--num_game_per_thread", type=int, default=33)
+    parser.add_argument("--num_thread", type=int, default=1, help="#thread_loop")
+    parser.add_argument("--num_game_per_thread", type=int, default=3)
 
     # actor setting
     parser.add_argument("--act_base_eps", type=float, default=0.1)
@@ -212,7 +212,6 @@ if __name__ == "__main__":
             adv_ratio=args.adv_ratio,
         )
         agent.sync_target_with_online()      
-
         agent_p = r2d2.R2D2Agent(
             (args.method == "vdn"),
             args.multi_step,
@@ -350,7 +349,6 @@ if __name__ == "__main__":
                 loss = (loss * weight).mean()
                 main_loss_list.append(loss.item())
                 loss.backward()
-                
                 batch_p, weight_p = replay_buffer_p.sample(args.batchsize, args.train_device)
                 # if np.random.rand() < 0.05:
                 #     obs = batch_p.obs
@@ -368,7 +366,6 @@ if __name__ == "__main__":
                 final_p_loss.backward()
                 torch.cuda.synchronize()
                 stopwatch.time("forward & backward")
-
                 g_norm = torch.nn.utils.clip_grad_norm_(
                     agent.online_net.parameters(), args.grad_clip
                 )
@@ -401,45 +398,46 @@ if __name__ == "__main__":
                 print("EPOCH: %d" % epoch)
                 tachometer.lap(replay_buffer, args.epoch_len * args.batchsize, count_factor)
                 stopwatch.summary()
-
             eval_seed = (9917 + epoch * 999999) % 7777777
             eval_agent.load_state_dict(agent.state_dict())
             eval_agent_p.load_state_dict(agent_p.state_dict())
 
             score_mm, perfect_mm, *_ = evaluate(
-                [eval_agent, eval_agent],
+                [eval_agent] * args.num_player,
                 1000,
                 eval_seed,
                 args.eval_bomb,
                 0,  # explore eps
                 args.sad,
                 args.hide_action,
+                params = [None] * (args.num_player),
                 device = args.act_device,
             )
 
             score_mp, perfect_mp, *_ = evaluate(
-                [eval_agent, eval_agent_p],
+                [eval_agent] + [eval_agent_p] * (args.num_player - 1),
                 1000,
                 eval_seed,
                 args.eval_bomb,
                 0,  # explore eps
                 args.sad,
                 args.hide_action,
-                params = [None,agent_params],
+                params = [None]+[agent_params] * (args.num_player - 1),
                 device = args.act_device,
             )
 
             score_pp, perfect_pp, *_ = evaluate(
-                [eval_agent_p, eval_agent_p],
+                [eval_agent_p] * args.num_player,
                 1000,
                 eval_seed,
                 args.eval_bomb,
                 0,  # explore eps
                 args.sad,
                 args.hide_action,
-                params = [agent_params,agent_params],
+                params = [agent_params]* (args.num_player),
                 device = args.act_device,
             )
+            print('pass eval')
             dict_stats['main_rl_loss'][epoch] = np.mean(main_loss_list)
             dict_stats['partner_rl_loss'][epoch] = np.mean(raw_loss_list)
             dict_stats['partner_extra_loss'][epoch] = np.mean(extra_loss_list)
