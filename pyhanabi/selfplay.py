@@ -80,7 +80,7 @@ def parse_args():
     parser.add_argument("--multi_step", type=int, default=3)
 
     # replay buffer settings
-    parser.add_argument("--burn_in_frames", type=int, default=1000)
+    parser.add_argument("--burn_in_frames", type=int, default=4000)
     parser.add_argument("--replay_buffer_size", type=int, default=35000)
     parser.add_argument(
         "--priority_exponent", type=float, default=0.9, help="alpha in p-replay"
