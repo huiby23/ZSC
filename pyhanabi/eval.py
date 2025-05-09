@@ -189,14 +189,15 @@ def evaluate(
     num_thread=10,
     max_len=80,
     device="cuda:0",
-    params=[None,None],
+    params=[None, None],
 ):
     """
     evaluate agents as long as they have a "act" function
     """
     if num_game < num_thread:
         num_thread = num_game
-
+    if len(agents) != len(params):
+        params = [None for _ in range(len(agents))]
     num_player = len(agents)
     if not isinstance(hide_action, list):
         hide_action = [hide_action for _ in range(num_player)]

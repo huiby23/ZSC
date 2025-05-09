@@ -23,10 +23,11 @@ show_xp = True
 show_1zsc = True
 
 # define protagonist set here
-protagonist_raw = ['obl_seed1','obl_seed2','obl_seed3','obl_seed4','obl_seed5']
+# protagonist_raw = ['s'+str(x)+'_ps3_div1_mm1_mp2_w1' for x in range(3)]
+protagonist_raw = ['3p_s4_div3']
 protagonist_pathset = []
 for model_name in protagonist_raw:
-    protagonist_pathset.append('obl_models/'+model_name+'/model0.pthw')
+    protagonist_pathset.append('subnet_models/'+model_name+'/model0.pthw')
 
 # define partner set here
 partner_pathset = []
@@ -48,7 +49,7 @@ if show_1zsc:
             sys.stdout = f
             for part_id, part_path in enumerate(partner_pathset):
                 if prot_path != part_path:
-                    test_models = [prot_path, part_path]
+                    test_models = [prot_path, part_path,part_path]
                     score, _, _, _, _ = evaluate_saved_model(test_models, 100, 0, 0)
                     score_set.append(score)
             sys.stdout = original_stdout

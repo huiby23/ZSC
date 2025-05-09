@@ -156,6 +156,24 @@ class R2D2Agent(torch.jit.ScriptModule):
         legal_adv = (1 + adv - adv.min()) * legal_move
         greedy_action = legal_adv.argmax(1).detach()
         return greedy_action, new_hid, legal_adv.detach()
+    
+    @torch.jit.script_method
+    def et3_act(
+        self,
+        priv_s: torch.Tensor,
+        publ_s: torch.Tensor,
+        legal_move: torch.Tensor,
+        hid: Dict[str, torch.Tensor],
+        epsilon: float,
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], torch.Tensor]:
+        adv, new_hid = self.online_net.act(priv_s, publ_s, publ_s, hid)
+        legal_adv = adv - (1 - legal_move) * 1e30
+        assert legal_adv.dim() == 2
+        ego_prob = nn.functional.softmax(legal_adv, 1)
+        random_prob = legal_move / legal_move.sum(1, keepdim=True)
+        mix_prob = epsilon * random_prob + (1.0 - epsilon) * ego_prob
+        action = mix_prob.multinomial(1).squeeze(1).detach()
+        return action, new_hid, mix_prob
 
     @torch.jit.script_method
     def boltzmann_act(
@@ -184,6 +202,8 @@ class R2D2Agent(torch.jit.ScriptModule):
             [batchsize] or [batchsize, num_player]
         """
         priv_s = obs["priv_s"]
+        #obs.keys():agent_p:[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand],agent_main[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+
         if "playStyle" in obs.keys():
             playstyle_s = obs["playStyle"]
         else:
@@ -218,40 +238,44 @@ class R2D2Agent(torch.jit.ScriptModule):
                 rand = torch.rand(greedy_action.size(), device=greedy_action.device)
                 assert rand.size() == eps.size()
                 rand = (rand < eps).float()
-                action = (greedy_action * (1 - rand) + random_action * rand).detach().long()                
+                action = (greedy_action * (1 - rand) + random_action * rand).detach().long()                             
         else:
-            greedy_action, new_hid, legal_adv = self.greedy_act(priv_s, publ_s, playstyle_s, legal_move, hid)
             reply = {}
-            if self.greedy:
-                action = greedy_action
+            if self.adv_type == 3:
+                action, new_hid, legal_adv = self.et3_act(priv_s, publ_s, legal_move, hid, epsilon=0.3)
             else:
-                if self.adv_type == 0:
-                    random_action = legal_move.multinomial(1).squeeze(1)
-                    rand = torch.rand(greedy_action.size(), device=greedy_action.device)
-                    assert rand.size() == eps.size()
-                    rand = (rand < eps).float()
-                    action = (greedy_action * (1 - rand) + random_action * rand).detach().long()
-                
-                elif self.adv_type == 1: #use sub optimal action
-                    adv_mask = (legal_adv != legal_adv.max(1,keepdim=True)[0])
-                    subopt_adv = adv_mask * legal_adv + 1e-3
-                    subopt_adv = subopt_adv * legal_move
-                    subopt_action = subopt_adv.argmax(1).detach()
-                    rand = torch.rand(greedy_action.size(), device=greedy_action.device)
-                    rand = (rand < self.adv_ratio).float()
-                    action = (greedy_action * (1 - rand) + subopt_action * rand).detach().long()
-                elif self.adv_type == 2: #use worst action
-                    forbidden_act = (legal_move == 0).float()
-                    worst_adv = legal_adv + 99.9*forbidden_act
-                    worst_action = worst_adv.argmin(1).detach()
-                    rand = torch.rand(greedy_action.size(), device=greedy_action.device)
-                    rand = (rand < self.adv_ratio).float()
-                    action = (greedy_action * (1 - rand) + worst_action * rand).detach().long()
-                else: #use random action
-                    random_action = legal_move.multinomial(1).squeeze(1)
-                    rand = torch.rand(greedy_action.size(), device=greedy_action.device)
-                    rand = (rand < self.adv_ratio).float()
-                    action = (greedy_action * (1 - rand) + random_action * rand).detach().long()                    
+                greedy_action, new_hid, legal_adv = self.greedy_act(priv_s, publ_s, playstyle_s, legal_move, hid)
+                if self.greedy:
+                    action = greedy_action
+                else:
+                    if self.adv_type == 0:
+                        random_action = legal_move.multinomial(1).squeeze(1)
+                        rand = torch.rand(greedy_action.size(), device=greedy_action.device)
+                        assert rand.size() == eps.size()
+                        rand = (rand < eps).float()
+                        action = (greedy_action * (1 - rand) + random_action * rand).detach().long()
+                    
+                    elif self.adv_type == 1: #use sub optimal action
+                        adv_mask = (legal_adv != legal_adv.max(1,keepdim=True)[0])
+                        subopt_adv = adv_mask * legal_adv + 1e-3
+                        subopt_adv = subopt_adv * legal_move
+                        subopt_action = subopt_adv.argmax(1).detach()
+                        rand = torch.rand(greedy_action.size(), device=greedy_action.device)
+                        rand = (rand < self.adv_ratio).float()
+                        action = (greedy_action * (1 - rand) + subopt_action * rand).detach().long()
+                    elif self.adv_type == 2: #use worst action
+                        forbidden_act = (legal_move == 0).float()
+                        worst_adv = legal_adv + 99.9*forbidden_act
+                        worst_action = worst_adv.argmin(1).detach()
+                        rand = torch.rand(greedy_action.size(), device=greedy_action.device)
+                        rand = (rand < self.adv_ratio).float()
+                        action = (greedy_action * (1 - rand) + worst_action * rand).detach().long()
+
+                    else: #use random action
+                        random_action = legal_move.multinomial(1).squeeze(1)
+                        rand = torch.rand(greedy_action.size(), device=greedy_action.device)
+                        rand = (rand < self.adv_ratio).float()
+                        action = (greedy_action * (1 - rand) + random_action * rand).detach().long()                    
 
         if self.vdn:
             action = action.view(bsize, num_player)

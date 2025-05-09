@@ -10,7 +10,7 @@
  'belief_device': 'cuda:0',
  'belief_model': 'None',
  'boltzmann_act': 0,
- 'burn_in_frames': 1000,
+ 'burn_in_frames': 4000,
  'calcu_loss': False,
  'clone_bot': '',
  'clone_t': 0.02,
@@ -19,6 +19,7 @@
  'div_weight': 1,
  'epoch_len': 600,
  'eps': 1.5e-05,
+ 'epsilon': 0.3,
  'eta': 0.9,
  'eval_bomb': 0,
  'gamma': 0.999,
@@ -96,1215 +97,1296 @@ Agent initialization complete. Disable parameter sharing.
 ActGroup created
 Finished creating 1 threads with 3 games and 9 actors
 warming up replay buffer: 0
-warming up replay buffer: 61
-warming up replay buffer: 210
-warming up replay buffer: 324
-warming up replay buffer: 460
-warming up replay buffer: 613
-warming up replay buffer: 755
-warming up replay buffer: 897
-Success, Done
-=======================
-beginning of epoch:  0
-available: 163.962 GB, used: 8.038 GB, free: 150.298 GB
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass_1
-pass_2
-pass train
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]
+[h0, c0, temperature, eps, priv_s, publ_s, legal_move, playStyle, own_hand]
+[h0, publ_s, priv_s, eps, temperature, c0, legal_move, own_hand]

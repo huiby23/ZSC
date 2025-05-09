@@ -122,6 +122,7 @@ def parse_args():
     parser.add_argument("--div_weight", type=float, default=1) 
     parser.add_argument("--calcu_loss", type=bool, default=False) 
     parser.add_argument("--max_val_mask", type=bool, default=False) 
+    parser.add_argument("--epsilon", type=float, default=0.3) # epsilon for et3
 
     # training setting
     args = parser.parse_args()
@@ -137,6 +138,10 @@ def parse_args():
 if __name__ == "__main__":
     torch.backends.cudnn.benchmark = True
     args = parse_args()
+    if args.div_type == 3:
+        args.adv_type = 3
+        args.play_styles = 1
+        args.no_sharing = 0
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
@@ -194,6 +199,7 @@ if __name__ == "__main__":
     }
 
     if args.no_sharing:
+
         agent = r2d2.R2D2Agent(
             (args.method == "vdn"),
             args.multi_step,
@@ -211,7 +217,27 @@ if __name__ == "__main__":
             adv_type=args.adv_type,
             adv_ratio=args.adv_ratio,
         )
-        agent.sync_target_with_online()      
+        agent.sync_target_with_online() 
+        # if args.div_type == 3:     
+        #     agent_p = r2d2.R2D2Agent(
+        #         (args.method == "vdn"),
+        #         args.multi_step,
+        #         args.gamma,
+        #         args.eta,
+        #         args.train_device,
+        #         games[0].feature_size(args.sad),
+        #         args.rnn_hid_dim,
+        #         games[0].num_action(),
+        #         args.net,
+        #         args.num_lstm_layer,
+        #         args.boltzmann_act,
+        #         False,  # uniform priority
+        #         args.off_belief,
+        #         adv_type=args.adv_type,
+        #         adv_ratio=args.adv_ratio,
+        #         play_styles=args.play_styles,
+        #     )
+        # else:
         agent_p = r2d2.R2D2Agent(
             (args.method == "vdn"),
             args.multi_step,
@@ -492,12 +518,6 @@ if __name__ == "__main__":
             utils.load_weight(agent.online_net, args.load_model, args.train_device)
             print("*****done*****")
 
-        # use clone bot for additional bc loss
-        if args.clone_bot and args.clone_bot != "None":
-            clone_bot = utils.load_supervised_agent(args.clone_bot, args.train_device)
-        else:
-            clone_bot = None
-
         agent = agent.to(args.train_device)
         optim = torch.optim.Adam(agent.online_net.parameters(), lr=args.lr, eps=args.eps)
         print(agent)
@@ -512,45 +532,58 @@ if __name__ == "__main__":
         )
 
         belief_model = None
-        if args.off_belief and args.belief_model != "None":
-            print(f"load belief model from {args.belief_model}")
-            from belief_model import ARBeliefModel
-
-            belief_devices = args.belief_device.split(",")
-            belief_config = utils.get_train_config(args.belief_model)
-            belief_model = []
-            for device in belief_devices:
-                belief_model.append(
-                    ARBeliefModel.load(
-                        args.belief_model,
-                        device,
-                        5,
-                        args.num_fict_sample,
-                        belief_config["fc_only"],
-                    )
-                )
-
-        act_group = ActGroup(
-            args.act_device,
-            agent,
-            args.seed,
-            args.num_thread,
-            args.num_game_per_thread,
-            args.num_player,
-            explore_eps,
-            boltzmann_t,
-            args.method,
-            args.sad,
-            args.shuffle_color,
-            args.hide_action,
-            True,  # trinary, 3 bits for aux task
-            replay_buffer,
-            args.multi_step,
-            args.max_len,
-            args.gamma,
-            args.off_belief,
-            belief_model,
-        )
+        if args.div_type == 3:
+            _replay_buffer = rela.RNNPrioritizedReplay(
+                args.replay_buffer_size,
+                args.seed,
+                args.priority_exponent,
+                args.priority_weight,
+                args.prefetch,
+            )
+            act_group = ActGroup(
+                args.act_device,
+                agent,
+                args.seed,
+                args.num_thread,
+                args.num_game_per_thread,
+                args.num_player,
+                explore_eps,
+                boltzmann_t,
+                args.method,
+                args.sad,
+                args.shuffle_color,
+                args.hide_action,
+                True,  # trinary, 3 bits for aux task
+                replay_buffer,
+                args.multi_step,
+                args.max_len,
+                args.gamma,
+                args.off_belief,
+                belief_model,
+                replay_buffer_p=_replay_buffer
+            )
+        else:
+            act_group = ActGroup(
+                args.act_device,
+                agent,
+                args.seed,
+                args.num_thread,
+                args.num_game_per_thread,
+                args.num_player,
+                explore_eps,
+                boltzmann_t,
+                args.method,
+                args.sad,
+                args.shuffle_color,
+                args.hide_action,
+                True,  # trinary, 3 bits for aux task
+                replay_buffer,
+                args.multi_step,
+                args.max_len,
+                args.gamma,
+                args.off_belief,
+                belief_model,
+            )
 
         context, threads = create_threads(
             args.num_thread,
@@ -558,8 +591,10 @@ if __name__ == "__main__":
             act_group.actors,
             games,
         )
-
-        act_group.start()
+        if args.div_type == 3:
+            act_group.start_nonsharing()
+        else:
+            act_group.start()
         context.start()
         while replay_buffer.size() < args.burn_in_frames:
             print("warming up replay buffer:", replay_buffer.size())
@@ -582,7 +617,7 @@ if __name__ == "__main__":
             tachometer.start()
             stat.reset()
             stopwatch.reset()
-
+            start_time = time.time()
             for batch_idx in range(args.epoch_len):
                 num_update = batch_idx + epoch * args.epoch_len
                 if num_update % args.num_update_between_sync == 0:
@@ -597,11 +632,7 @@ if __name__ == "__main__":
                 stopwatch.time("sample data")
 
                 loss, priority, online_q, _, _ = agent.loss(batch, args.aux_weight, stat)
-                if clone_bot is not None and args.clone_weight > 0:
-                    bc_loss = agent.behavior_clone_loss(
-                        online_q, batch, args.clone_t, clone_bot, stat
-                    )
-                    loss = loss + bc_loss * args.clone_weight
+                
                 loss = (loss * weight).mean()
                 loss.backward()
 
@@ -639,6 +670,7 @@ if __name__ == "__main__":
                 0,  # explore eps
                 args.sad,
                 args.hide_action,
+                params = [None] * (args.num_player),
                 device = args.act_device,
             )
             dict_stats['score_mm'][epoch] = score
@@ -651,22 +683,9 @@ if __name__ == "__main__":
                 None, agent.online_net.state_dict(), score, force_save_name=force_save_name
             )
             print(
-                "epoch %d, eval score: %.4f, perfect: %.2f, model saved: %s"
-                % (epoch, score, perfect * 100, model_saved)
+                "epoch %d,train time: %.3e, eval score: %.4f, perfect: %.2f, model saved: %s"
+                % (epoch,time.time()-start_time,score, perfect * 100, model_saved)
             )
-
-            if clone_bot is not None:
-                score, perfect, *_ = evaluate(
-                    [clone_bot] + [eval_agent for _ in range(args.num_player - 1)],
-                    1000,
-                    eval_seed,
-                    args.eval_bomb,
-                    0,  # explore eps
-                    args.sad,
-                    args.hide_action,
-                    device = args.act_device,
-                )
-                print(f"clone bot score: {np.mean(score)}")
 
             if args.off_belief:
                 actors = common_utils.flatten(act_group.actors)
