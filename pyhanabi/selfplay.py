@@ -407,39 +407,41 @@ if __name__ == "__main__":
             eval_agent_p.load_state_dict(agent_p.state_dict())
 
             score_mm, perfect_mm, *_ = evaluate(
-                [eval_agent, eval_agent],
+                [eval_agent] * args.num_player,
                 1000,
                 eval_seed,
                 args.eval_bomb,
                 0,  # explore eps
                 args.sad,
                 args.hide_action,
+                params = [None] * (args.num_player),
                 device = args.act_device,
             )
 
             score_mp, perfect_mp, *_ = evaluate(
-                [eval_agent, eval_agent_p],
+                [eval_agent] + [eval_agent_p] * (args.num_player - 1),
                 1000,
                 eval_seed,
                 args.eval_bomb,
                 0,  # explore eps
                 args.sad,
                 args.hide_action,
-                params = [None,agent_params],
+                params = [None]+[agent_params] * (args.num_player - 1),
                 device = args.act_device,
             )
 
             score_pp, perfect_pp, *_ = evaluate(
-                [eval_agent_p, eval_agent_p],
+                [eval_agent_p] * args.num_player,
                 1000,
                 eval_seed,
                 args.eval_bomb,
                 0,  # explore eps
                 args.sad,
                 args.hide_action,
-                params = [agent_params,agent_params],
+                params = [agent_params]* (args.num_player),
                 device = args.act_device,
             )
+
             dict_stats['main_rl_loss'][epoch] = np.mean(main_loss_list)
             dict_stats['partner_rl_loss'][epoch] = np.mean(raw_loss_list)
             dict_stats['partner_extra_loss'][epoch] = np.mean(extra_loss_list)
@@ -642,6 +644,7 @@ if __name__ == "__main__":
                 args.sad,
                 args.hide_action,
                 device = args.act_device,
+                params = [None]* (args.num_player)
             )
             dict_stats['score_mm'][epoch] = score
             with open(os.path.join(args.save_dir, 'train_log.pkl'), 'wb') as pickle_file:

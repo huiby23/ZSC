@@ -14,6 +14,8 @@ sweep*.py
 pyhanabi/tools/bad_player/
 pyhanabi/tools/bad_player_sparta/
 pyhanabi/models/*
+pyhanabi/subnet_models/*
+pyhanabi/encoding_models/*
 pyhanabi/iclr_models/*
 pyhanabi/notebooks/*
 pyhanabi/extract_human_data.py
