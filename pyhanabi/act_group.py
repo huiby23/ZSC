@@ -398,8 +398,12 @@ class ActGroup:
     def start_nonsharing(self):
         for runner in self.model_runners:
             runner.start()
-        for runner in self.model_runners_et3:
-            runner.start()
+        if self.et3_flag:
+            for runner in self.model_runners_et3:
+                runner.start()
+        else:
+            for runner in self.model_runners_p:
+                runner.start()
 
     def update_model(self, agent):
         for runner in self.model_runners:
