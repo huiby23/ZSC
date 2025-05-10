@@ -28,3 +28,4 @@ models_bkup.zip
 models_bkup/
 *.pdf
 *.npy
+*.log
