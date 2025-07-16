@@ -48,6 +48,8 @@ class ActGroup:
         play_params = None,
     ):
         self.devices = devices.split(",")
+        self.et3_flag = False
+
         if (agent_params is None):
             agent_params = {'play_styles':0, "rand_perstep":0}
         if agent_p is not None:
@@ -68,7 +70,7 @@ class ActGroup:
             self.off_belief = off_belief
             self.belief_model = belief_model
             self.belief_runner = None
-            self.et3_flag = False
+            
 
             self.actors = []
             assert (method == "iql")

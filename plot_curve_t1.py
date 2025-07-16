@@ -8,7 +8,8 @@ plt.rcParams['ps.fonttype'] = 42
 from scipy.ndimage import convolve 
 #logs_path_set = ['ps5_seed0','new_ps5_div2_trn2_w005','new_ps3_div0_trn2_w005','new_ps5_div1_trn2_w0025']
 
-model_path_set = ['s'+str(i)+'_ps5_div1_mm1_mp2_w1' for i in range(1,6)]
+# model_path_set = ['s'+str(i)+'_ps5_div1_mm1_mp2_w1' for i in range(1,5)]
+model_path_set = ['5p_s'+str(i)+'_ps5_div1_mm1_mp2_w1' for i in range(1,5)]
 logs_path_set = ['subnet_models/'+log_path+'/train_log.pkl' for log_path in model_path_set]
 
 figure_title = r'$\alpha$=1'

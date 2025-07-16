@@ -243,6 +243,7 @@ class R2D2Agent(torch.jit.ScriptModule):
             reply = {}
             if self.adv_type == 3:
                 action, new_hid, legal_adv = self.et3_act(priv_s, publ_s, legal_move, hid, epsilon=0.3)
+                greedy_action = action
             else:
                 greedy_action, new_hid, legal_adv = self.greedy_act(priv_s, publ_s, playstyle_s, legal_move, hid)
                 if self.greedy:

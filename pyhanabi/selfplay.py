@@ -29,8 +29,8 @@ import utils
 
 def parse_args():
     parser = argparse.ArgumentParser(description="train dqn on hanabi")
-    parser.add_argument("--save_dir", type=str, default="subnet_models/5p_s4_ps5_div1_mm1_mp2_w1")
-    parser.add_argument("--method", type=str, default="iql")
+    parser.add_argument("--save_dir", type=str, default="exps/exp1")
+    parser.add_argument("--method", type=str, default="vdn")
     parser.add_argument("--shuffle_color", type=int, default=0)
     parser.add_argument("--aux_weight", type=float, default=0)
     parser.add_argument("--boltzmann_act", type=int, default=0)
@@ -48,7 +48,7 @@ def parse_args():
     parser.add_argument("--clone_weight", type=float, default=0.0)
     parser.add_argument("--clone_t", type=float, default=0.02)
 
-    parser.add_argument("--seed", type=int, default=4)
+    parser.add_argument("--seed", type=int, default=10001)
     parser.add_argument("--gamma", type=float, default=0.999, help="discount factor")
     parser.add_argument(
         "--eta", type=float, default=0.9, help="eta for aggregate priority"
@@ -56,7 +56,7 @@ def parse_args():
     parser.add_argument("--train_bomb", type=int, default=0)
     parser.add_argument("--eval_bomb", type=int, default=0)
     parser.add_argument("--sad", type=int, default=0)
-    parser.add_argument("--num_player", type=int, default=3)
+    parser.add_argument("--num_player", type=int, default=2)
 
     # optimization/training settings
     parser.add_argument("--lr", type=float, default=6.25e-5, help="Learning rate")
@@ -64,12 +64,10 @@ def parse_args():
     parser.add_argument("--grad_clip", type=float, default=5, help="max grad norm")
     parser.add_argument("--num_lstm_layer", type=int, default=2)
     parser.add_argument("--rnn_hid_dim", type=int, default=512)
-    # parser.add_argument(
-    #     "--net", type=str, default="publ-lstm", help="publ-lstm/ffwd/lstm"
-    # )
     parser.add_argument(
-        "--net", type=str, default="lstm", help=""
+        "--net", type=str, default="publ-lstm", help="publ-lstm/ffwd/lstm"
     )
+
     parser.add_argument("--train_device", type=str, default="cuda:0")
     parser.add_argument("--batchsize", type=int, default=128)
     parser.add_argument("--num_epoch", type=int, default=500)
@@ -80,8 +78,8 @@ def parse_args():
     parser.add_argument("--multi_step", type=int, default=3)
 
     # replay buffer settings
-    parser.add_argument("--burn_in_frames", type=int, default=4000)
-    parser.add_argument("--replay_buffer_size", type=int, default=35000)
+    parser.add_argument("--burn_in_frames", type=int, default=10000)
+    parser.add_argument("--replay_buffer_size", type=int, default=100000)
     parser.add_argument(
         "--priority_exponent", type=float, default=0.9, help="alpha in p-replay"
     )
@@ -92,8 +90,8 @@ def parse_args():
     parser.add_argument("--prefetch", type=int, default=3, help="#prefetch batch")
 
     # thread setting
-    parser.add_argument("--num_thread", type=int, default=1, help="#thread_loop")
-    parser.add_argument("--num_game_per_thread", type=int, default=3)
+    parser.add_argument("--num_thread", type=int, default=10, help="#thread_loop")
+    parser.add_argument("--num_game_per_thread", type=int, default=40)
 
     # actor setting
     parser.add_argument("--act_base_eps", type=float, default=0.1)
@@ -106,20 +104,20 @@ def parse_args():
     parser.add_argument("--adv_ratio", type=float, default=0.0)   
 
     # non-parameter sharing setting
-    parser.add_argument("--no_sharing", type=bool, default=1)     
+    parser.add_argument("--no_sharing", type=bool, default=False)     
 
     # playstyles setting
-    parser.add_argument("--play_styles", type=int, default=5)
+    parser.add_argument("--play_styles", type=int, default=0)
     parser.add_argument("--rand_perstep", type=bool, default=False)  
 
     # PBL-encoding training setting
     parser.add_argument("--group_mm", type=int, default=1)
-    parser.add_argument("--group_mp", type=int, default=2)
+    parser.add_argument("--group_mp", type=int, default=1)
     parser.add_argument("--group_pp", type=int, default=0)
 
-    parser.add_argument("--div_type", type=int, default=1) # 0:sim_mim; 1:real_mim; 2:entropy   
+    parser.add_argument("--div_type", type=int, default=0) # 0:sim_mim; 1:real_mim; 2:entropy   
     parser.add_argument("--action_inputtype", type=int, default=0) # 0:greedy action; 1:in batch action
-    parser.add_argument("--div_weight", type=float, default=1) 
+    parser.add_argument("--div_weight", type=float, default=0) 
     parser.add_argument("--calcu_loss", type=bool, default=False) 
     parser.add_argument("--max_val_mask", type=bool, default=False) 
     parser.add_argument("--epsilon", type=float, default=0.3) # epsilon for et3
@@ -518,6 +516,11 @@ if __name__ == "__main__":
             utils.load_weight(agent.online_net, args.load_model, args.train_device)
             print("*****done*****")
 
+        if args.clone_bot and args.clone_bot != "None":
+            clone_bot = utils.load_supervised_agent(args.clone_bot, args.train_device)
+        else:
+            clone_bot = None
+
         agent = agent.to(args.train_device)
         optim = torch.optim.Adam(agent.online_net.parameters(), lr=args.lr, eps=args.eps)
         print(agent)
@@ -532,6 +535,24 @@ if __name__ == "__main__":
         )
 
         belief_model = None
+        if args.off_belief and args.belief_model != "None":
+            print(f"load belief model from {args.belief_model}")
+            from belief_model import ARBeliefModel
+
+            belief_devices = args.belief_device.split(",")
+            belief_config = utils.get_train_config(args.belief_model)
+            belief_model = []
+            for device in belief_devices:
+                belief_model.append(
+                    ARBeliefModel.load(
+                        args.belief_model,
+                        device,
+                        5,
+                        args.num_fict_sample,
+                        belief_config["fc_only"],
+                    )
+                )
+
         if args.div_type == 3:
             _replay_buffer = rela.RNNPrioritizedReplay(
                 args.replay_buffer_size,
@@ -633,6 +654,12 @@ if __name__ == "__main__":
 
                 loss, priority, online_q, _, _ = agent.loss(batch, args.aux_weight, stat)
                 
+                if clone_bot is not None and args.clone_weight > 0:
+                    bc_loss = agent.behavior_clone_loss(
+                        online_q, batch, args.clone_t, clone_bot, stat
+                    )
+                    loss = loss + bc_loss * args.clone_weight
+                
                 loss = (loss * weight).mean()
                 loss.backward()
 
@@ -686,6 +713,19 @@ if __name__ == "__main__":
                 "epoch %d,train time: %.3e, eval score: %.4f, perfect: %.2f, model saved: %s"
                 % (epoch,time.time()-start_time,score, perfect * 100, model_saved)
             )
+
+            if clone_bot is not None:
+                score, perfect, *_ = evaluate(
+                    [clone_bot] + [eval_agent for _ in range(args.num_player - 1)],
+                    1000,
+                    eval_seed,
+                    args.eval_bomb,
+                    0,  # explore eps
+                    args.sad,
+                    args.hide_action,
+                    device = args.act_device,
+                )
+                print(f"clone bot score: {np.mean(score)}")
 
             if args.off_belief:
                 actors = common_utils.flatten(act_group.actors)

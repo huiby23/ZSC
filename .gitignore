@@ -32,3 +32,5 @@ models_bkup/
 core
 core.*
 *.log
+matrix_game/*
+pyhanabi/trash/*
