@@ -216,26 +216,7 @@ if __name__ == "__main__":
             adv_ratio=args.adv_ratio,
         )
         agent.sync_target_with_online() 
-        # if args.div_type == 3:     
-        #     agent_p = r2d2.R2D2Agent(
-        #         (args.method == "vdn"),
-        #         args.multi_step,
-        #         args.gamma,
-        #         args.eta,
-        #         args.train_device,
-        #         games[0].feature_size(args.sad),
-        #         args.rnn_hid_dim,
-        #         games[0].num_action(),
-        #         args.net,
-        #         args.num_lstm_layer,
-        #         args.boltzmann_act,
-        #         False,  # uniform priority
-        #         args.off_belief,
-        #         adv_type=args.adv_type,
-        #         adv_ratio=args.adv_ratio,
-        #         play_styles=args.play_styles,
-        #     )
-        # else:
+        
         agent_p = r2d2.R2D2Agent(
             (args.method == "vdn"),
             args.multi_step,
